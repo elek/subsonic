@@ -72,6 +72,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     private final LRUCache<MusicDirectory.Entry, DownloadFile> downloadFileCache = new LRUCache<MusicDirectory.Entry, DownloadFile>(100);
     private final List<DownloadFile> cleanupCandidates = new ArrayList<DownloadFile>();
     private final Scrobbler scrobbler = new Scrobbler();
+    private final JukeboxService jukeboxService = new JukeboxService(this);
     private DownloadFile currentPlaying;
     private DownloadFile currentDownloading;
     private CancellableTask bufferTask;
@@ -211,6 +212,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
         }
         lifecycleSupport.serializeDownloadQueue();
+        jukeboxService.updatePlaylist();
     }
 
     public void restore(List<MusicDirectory.Entry> songs, int currentPlayingIndex, int currentPlayingPosition) {
@@ -250,6 +252,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         }
         revision++;
         lifecycleSupport.serializeDownloadQueue();
+        jukeboxService.updatePlaylist();
     }
 
     @Override
@@ -314,6 +317,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             }
         }
         lifecycleSupport.serializeDownloadQueue();
+        jukeboxService.updatePlaylist();
     }
 
     @Override
@@ -334,6 +338,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         if (serialize) {
             lifecycleSupport.serializeDownloadQueue();
         }
+        jukeboxService.updatePlaylist();
     }
 
     @Override
@@ -618,6 +623,9 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     @Override
     public void setJukeboxEnabled(boolean jukeboxEnabled) {
         this.jukeboxEnabled = jukeboxEnabled;
+        if (jukeboxEnabled) {
+            jukeboxService.updatePlaylist();
+        }
     }
 
     private synchronized void bufferAndPlay() {
