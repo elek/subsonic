@@ -18,15 +18,6 @@
  */
 package net.sourceforge.subsonic.androidapp.activity;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -72,6 +63,15 @@ import net.sourceforge.subsonic.androidapp.util.SongView;
 import net.sourceforge.subsonic.androidapp.util.Util;
 import net.sourceforge.subsonic.androidapp.view.VisualizerView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import static net.sourceforge.subsonic.androidapp.domain.PlayerState.*;
 
 public class DownloadActivity extends SubsonicTabActivity implements OnGestureListener {
@@ -100,6 +100,7 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
     private ImageButton repeatButton;
     private Button equalizerButton;
     private Button visualizerButton;
+    private Button jukeboxButton;
     private View toggleListButton;
     private ScheduledExecutorService executorService;
     private DownloadFile currentPlaying;
@@ -145,6 +146,7 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         repeatButton = (ImageButton) findViewById(R.id.download_repeat);
         equalizerButton = (Button) findViewById(R.id.download_equalizer);
         visualizerButton = (Button) findViewById(R.id.download_visualizer);
+        jukeboxButton = (Button) findViewById(R.id.download_jukebox);
         LinearLayout visualizerViewLayout = (LinearLayout) findViewById(R.id.download_visualizer_view_layout);
 
         toggleListButton = findViewById(R.id.download_toggle_list);
@@ -253,6 +255,14 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
             }
         });
 
+        jukeboxButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getDownloadService().setJukeboxEnabled(!getDownloadService().isJukeboxEnabled());
+                updateButtons();
+            }
+        });
+
         toggleListButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -312,6 +322,7 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/Storopia.ttf");
         equalizerButton.setTypeface(typeface);
         visualizerButton.setTypeface(typeface);
+        jukeboxButton.setTypeface(typeface);
     }
 
     @Override
@@ -365,6 +376,9 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         if (visualizerView != null) {
             visualizerButton.setTextColor(visualizerView.isActive() ? Color.rgb(129, 201, 54) : Color.rgb(164, 166, 158));
         }
+
+        boolean jukeboxEnabled = getDownloadService() != null && getDownloadService().isJukeboxEnabled();
+        jukeboxButton.setTextColor(jukeboxEnabled ? Color.rgb(129, 201, 54) : Color.rgb(164, 166, 158));
     }
 
     // Scroll to current playing/downloading.

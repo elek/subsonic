@@ -29,6 +29,20 @@
                     a:paddingLeft="8dip"/>
 
             <Button
+                    a:id="@+id/download_jukebox"
+                    a:text="RC"
+                    a:textStyle="bold"
+                    a:textSize="22sp"
+                    a:background="@android:color/transparent"
+                    a:layout_width="wrap_content"
+                    a:layout_height="wrap_content"
+                    a:layout_gravity="top|right"
+                    a:layout_below="@+id/download_repeat"
+                    a:paddingTop="12dip"
+                    a:paddingLeft="12dip"
+                    a:paddingBottom="12dip"/>
+
+            <Button
                     a:id="@+id/download_equalizer"
                     a:text="EQ"
                     a:textStyle="bold"

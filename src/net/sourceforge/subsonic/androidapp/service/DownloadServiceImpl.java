@@ -18,12 +18,6 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Collections;
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -34,16 +28,22 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 import net.sourceforge.subsonic.androidapp.R;
+import net.sourceforge.subsonic.androidapp.audiofx.EqualizerController;
 import net.sourceforge.subsonic.androidapp.audiofx.VisualizerController;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
 import net.sourceforge.subsonic.androidapp.domain.RepeatMode;
 import net.sourceforge.subsonic.androidapp.util.CancellableTask;
+import net.sourceforge.subsonic.androidapp.util.LRUCache;
 import net.sourceforge.subsonic.androidapp.util.ShufflePlayBuffer;
 import net.sourceforge.subsonic.androidapp.util.SimpleServiceBinder;
 import net.sourceforge.subsonic.androidapp.util.Util;
-import net.sourceforge.subsonic.androidapp.util.LRUCache;
-import net.sourceforge.subsonic.androidapp.audiofx.EqualizerController;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static net.sourceforge.subsonic.androidapp.domain.PlayerState.*;
 
@@ -88,6 +88,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     private EqualizerController equalizerController;
     private VisualizerController visualizerController;
     private boolean showVisualization;
+    private boolean jukeboxEnabled;
 
     static {
         try {
@@ -412,11 +413,6 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     }
 
     @Override
-    public synchronized void play(DownloadFile file) {
-        play(downloadList.indexOf(file));
-    }
-
-    @Override
     public synchronized void play(int index) {
         play(index, true);
     }
@@ -614,6 +610,16 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         return visualizerController;
     }
 
+    @Override
+    public boolean isJukeboxEnabled() {
+        return jukeboxEnabled;
+    }
+
+    @Override
+    public void setJukeboxEnabled(boolean jukeboxEnabled) {
+        this.jukeboxEnabled = jukeboxEnabled;
+    }
+
     private synchronized void bufferAndPlay() {
         reset();
 
@@ -705,7 +711,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
 
     protected synchronized void checkDownloads() {
 
-        if (!Util.isNetworkConnected(this) || !Util.isExternalStoragePresent() || !lifecycleSupport.isExternalStorageAvailable()) {
+        if (jukeboxEnabled || !Util.isNetworkConnected(this) || !Util.isExternalStoragePresent() || !lifecycleSupport.isExternalStorageAvailable()) {
             return;
         }
 
