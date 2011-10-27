@@ -35,6 +35,15 @@ public class JukeboxService {
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
+        new Thread() {
+            @Override
+            public void run() {
+                processTasks();
+            }
+        }.start();
+    }
+
+    private void processTasks() {
     }
 
     public void updatePlaylist() {
