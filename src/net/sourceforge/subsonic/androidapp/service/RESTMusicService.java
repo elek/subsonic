@@ -91,6 +91,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -266,6 +267,10 @@ public class RESTMusicService implements MusicService {
 
     private boolean isServerAtLeast15() {
         return isServerAtLeast("1.5");
+    }
+
+    private boolean isServerAtLeast17() {
+        return isServerAtLeast("1.7");
     }
 
     private boolean isServerAtLeast(String version) {
@@ -511,6 +516,43 @@ public class RESTMusicService implements MusicService {
         String url = rewriteUrlWithRedirect(context, builder.toString());
         Log.i(TAG, "Using video URL: " + url);
         return url;
+    }
+
+    @Override
+    public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
+
+        if (!isServerAtLeast17()) {
+            throw new Exception("Jukebox not supported, server version is too old.");
+        }
+
+        List<String> parameterNames = new ArrayList<String>(ids.size() + 1);
+        parameterNames.add("action");
+        for (int i = 0; i < ids.size(); i++) {
+            parameterNames.add("id");
+        }
+        List<Object> parameterValues = new ArrayList<Object>();
+        parameterValues.add("set");
+        parameterValues.addAll(ids);
+
+        Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
+        try {
+            new ErrorParser(context).parse(reader);
+        } finally {
+            Util.close(reader);
+        }
+    }
+
+    @Override
+    public void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception {
+
+        List<String> parameterNames = Arrays.asList("action", "index");
+        List<Object> parameterValues = Arrays.<Object>asList("skip", index);
+        Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
+        try {
+            new ErrorParser(context).parse(reader);
+        } finally {
+            Util.close(reader);
+        }
     }
 
     private Reader getReader(Context context, ProgressListener progressListener, String method, HttpParams requestParams) throws Exception {

@@ -212,7 +212,13 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
         }
         lifecycleSupport.serializeDownloadQueue();
-        jukeboxService.updatePlaylist();
+        updateJukeboxPlaylist();
+    }
+
+    private void updateJukeboxPlaylist() {
+        if (jukeboxEnabled) {
+            jukeboxService.updatePlaylist();
+        }
     }
 
     public void restore(List<MusicDirectory.Entry> songs, int currentPlayingIndex, int currentPlayingPosition) {
@@ -252,7 +258,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         }
         revision++;
         lifecycleSupport.serializeDownloadQueue();
-        jukeboxService.updatePlaylist();
+        updateJukeboxPlaylist();
     }
 
     @Override
@@ -317,7 +323,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             }
         }
         lifecycleSupport.serializeDownloadQueue();
-        jukeboxService.updatePlaylist();
+        updateJukeboxPlaylist();
     }
 
     @Override
@@ -338,7 +344,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         if (serialize) {
             lifecycleSupport.serializeDownloadQueue();
         }
-        jukeboxService.updatePlaylist();
+        updateJukeboxPlaylist();
     }
 
     @Override
@@ -422,7 +428,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         play(index, true);
     }
 
-    synchronized void play(int index, boolean start) {
+    private synchronized void play(int index, boolean start) {
         if (index < 0 || index >= size()) {
             reset();
             setCurrentPlaying(null, false);
@@ -431,6 +437,9 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
             if (start) {
                 bufferAndPlay();
+                if (jukeboxEnabled) {
+                    jukeboxService.skip(index);
+                }
             }
         }
     }
@@ -624,7 +633,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     public void setJukeboxEnabled(boolean jukeboxEnabled) {
         this.jukeboxEnabled = jukeboxEnabled;
         if (jukeboxEnabled) {
-            jukeboxService.updatePlaylist();
+            updateJukeboxPlaylist();
         }
     }
 

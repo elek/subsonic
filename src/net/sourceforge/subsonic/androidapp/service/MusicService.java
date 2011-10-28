@@ -74,4 +74,8 @@ public interface MusicService {
     Version getLatestVersion(Context context, ProgressListener progressListener) throws Exception;
 
     String getVideoUrl(Context context, String id);
+
+    void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception;
+
+    void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception;
 }

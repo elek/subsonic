@@ -188,6 +188,16 @@ public class CachedMusicService implements MusicService {
         return musicService.getVideoUrl(context, id);
     }
 
+    @Override
+    public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
+        musicService.updateJukeboxPlaylist(ids, context, progressListener);
+    }
+
+    @Override
+    public void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception {
+        musicService.skipJukebox(index, context, progressListener);
+    }
+
     private void checkSettingsChanged(Context context) {
         String newUrl = Util.getRestUrl(context, null);
         if (!Util.equals(newUrl, restUrl)) {

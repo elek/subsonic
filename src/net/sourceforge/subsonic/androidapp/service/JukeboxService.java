@@ -18,11 +18,14 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Sindre Mehus
@@ -30,8 +33,16 @@ import java.util.concurrent.LinkedBlockingDeque;
  */
 public class JukeboxService {
 
-    private final BlockingQueue<Callable<?>> tasks = new LinkedBlockingDeque<Callable<?>>();
+    private static final String TAG = JukeboxService.class.getSimpleName();
+
+    private final BlockingQueue<Callable<?>> tasks = new LinkedBlockingQueue<Callable<?>>();
     private final DownloadServiceImpl downloadService;
+
+    // TODO: Create shutdown method?
+    // TODO: Call getLicense earlier
+    // TODO: Gain control
+    // TODO: Excessive cpu usage?
+    // TODO: Landscape mode
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -44,6 +55,13 @@ public class JukeboxService {
     }
 
     private void processTasks() {
+        while (true) {
+            try {
+                tasks.take().call();
+            } catch (Throwable x) {
+                Log.e(TAG, "Failed to process jukebox task: " + x, x);
+            }
+        }
     }
 
     public void updatePlaylist() {
@@ -52,6 +70,20 @@ public class JukeboxService {
             ids.add(file.getSong().getId());
         }
         tasks.add(new UpdatePlaylistTask(ids));
+    }
+
+    public void skip(final int index) {
+        tasks.add(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                getMusicService().skipJukebox(index, downloadService, null);
+                return null;
+            }
+        });
+    }
+
+    private MusicService getMusicService() {
+        return MusicServiceFactory.getMusicService(downloadService);
     }
 
     private class UpdatePlaylistTask implements Callable<Void> {
@@ -64,9 +96,10 @@ public class JukeboxService {
 
         @Override
         public Void call() throws Exception {
-            MusicService service = MusicServiceFactory.getMusicService(downloadService);
-            service.updateJukeboxPlaylist(ids);
+            getMusicService().updateJukeboxPlaylist(ids, downloadService, null);
+            Log.d(TAG, "Updated jukebox with " + ids.size() + " songs.");
             return null;
         }
+
     }
 }
