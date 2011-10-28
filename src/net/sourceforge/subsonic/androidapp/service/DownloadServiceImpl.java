@@ -360,6 +360,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         downloadList.remove(downloadFile);
         revision++;
         lifecycleSupport.serializeDownloadQueue();
+        updateJukeboxPlaylist();
     }
 
     @Override
@@ -436,9 +437,10 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             setCurrentPlaying(downloadList.get(index), start);
             checkDownloads();
             if (start) {
-                bufferAndPlay();
                 if (jukeboxEnabled) {
                     jukeboxService.skip(index);
+                } else {
+                    bufferAndPlay();
                 }
             }
         }
@@ -634,6 +636,11 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         this.jukeboxEnabled = jukeboxEnabled;
         if (jukeboxEnabled) {
             updateJukeboxPlaylist();
+
+            // Cancel current download, if necessary.
+            if (currentDownloading != null) {
+                currentDownloading.cancelDownload();
+            }
         }
     }
 

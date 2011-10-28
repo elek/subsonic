@@ -43,6 +43,11 @@ public class JukeboxService {
     // TODO: Gain control
     // TODO: Excessive cpu usage?
     // TODO: Landscape mode
+    // TODO: Pause/resume
+    // TODO: Widget
+    // TODO: Shuffle play
+    // TODO: Stop local playback when switching to RC.
+
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
