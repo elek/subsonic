@@ -71,7 +71,7 @@ public class CachedMusicService implements MusicService {
         Boolean result = cachedLicenseValid.get();
         if (result == null) {
             result = musicService.isLicenseValid(context, progressListener);
-            cachedLicenseValid.set(result);
+            cachedLicenseValid.set(result, result ? 30L * 60L : 2L * 60L, TimeUnit.SECONDS);
         }
         return result;
     }

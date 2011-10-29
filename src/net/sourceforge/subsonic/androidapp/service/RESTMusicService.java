@@ -83,15 +83,12 @@ import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,7 +127,6 @@ public class RESTMusicService implements MusicService {
     private String redirectFrom;
     private String redirectTo;
     private final ThreadSafeClientConnManager connManager;
-    private Version serverRestVersion;
 
     public RESTMusicService() {
 
@@ -181,7 +177,6 @@ public class RESTMusicService implements MusicService {
         Reader reader = getReader(context, progressListener, "getLicense", null);
         try {
             ServerInfo serverInfo = new LicenseParser(context).parse(reader);
-            serverRestVersion = serverInfo.getRestVersion();
             return serverInfo.isLicenseValid();
         } finally {
             Util.close(reader);
@@ -254,30 +249,28 @@ public class RESTMusicService implements MusicService {
     @Override
     public SearchResult search(SearchCritera critera, Context context, ProgressListener progressListener) throws Exception {
         // Ensure backward compatibility with REST 1.3.
-        if (isServerAtLeast14()) {
+        if (isServerAtLeast14(context)) {
             return searchNew(critera, context, progressListener);
         } else {
             return searchOld(critera, context, progressListener);
         }
     }
 
-    private boolean isServerAtLeast14() {
-        return isServerAtLeast("1.4");
+    private boolean isServerAtLeast14(Context context) {
+        return isServerAtLeast(context, "1.4");
     }
 
-    private boolean isServerAtLeast15() {
-        return isServerAtLeast("1.5");
+    private boolean isServerAtLeast15(Context context) {
+        return isServerAtLeast(context, "1.5");
     }
 
-    private boolean isServerAtLeast17() {
-        return isServerAtLeast("1.7");
+    private boolean isServerAtLeast17(Context context) {
+        return isServerAtLeast(context, "1.7");
     }
 
-    private boolean isServerAtLeast(String version) {
-        if (serverRestVersion == null) {
-            return false;
-        }
-        return serverRestVersion.compareTo(new Version(version)) >= 0;
+    private boolean isServerAtLeast(Context context, String version) {
+        Version serverVersion = Util.getServerRestVersion(context);
+        return serverVersion == null || serverVersion.compareTo(new Version(version)) >= 0;
     }
 
     /**
@@ -371,7 +364,7 @@ public class RESTMusicService implements MusicService {
     @Override
     public void scrobble(String id, boolean submission, Context context, ProgressListener progressListener) throws Exception {
 
-        if (!isServerAtLeast15()) {
+        if (!isServerAtLeast15(context)) {
             throw new Exception("Scrobbling not supported, server version is too old.");
         }
 
@@ -521,7 +514,7 @@ public class RESTMusicService implements MusicService {
     @Override
     public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
 
-        if (!isServerAtLeast17()) {
+        if (!isServerAtLeast17(context)) {
             throw new Exception("Jukebox not supported, server version is too old.");
         }
 

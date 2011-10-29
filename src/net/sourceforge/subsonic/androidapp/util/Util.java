@@ -32,8 +32,11 @@ import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import android.app.Service;
+import net.sourceforge.subsonic.androidapp.domain.Version;
 import org.apache.http.HttpEntity;
 
 import android.app.Activity;
@@ -67,7 +70,6 @@ import net.sourceforge.subsonic.androidapp.domain.PlayerState;
 import net.sourceforge.subsonic.androidapp.domain.RepeatMode;
 import net.sourceforge.subsonic.androidapp.provider.SubsonicAppWidgetProvider;
 import net.sourceforge.subsonic.androidapp.receiver.MediaButtonIntentReceiver;
-import net.sourceforge.subsonic.androidapp.service.DownloadService;
 import net.sourceforge.subsonic.androidapp.service.DownloadServiceImpl;
 
 /**
@@ -89,6 +91,8 @@ public final class Util {
 
     public static final String EVENT_META_CHANGED = "net.sourceforge.subsonic.androidapp.EVENT_META_CHANGED";
     public static final String EVENT_PLAYSTATE_CHANGED = "net.sourceforge.subsonic.androidapp.EVENT_PLAYSTATE_CHANGED";
+
+    private static final Map<Integer, Version> SERVER_REST_VERSIONS = new ConcurrentHashMap<Integer, Version>();
 
     // Used by hexEncode()
     private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -143,6 +147,14 @@ public final class Util {
         }
         SharedPreferences prefs = getPreferences(context);
         return prefs.getString(Constants.PREFERENCES_KEY_SERVER_NAME + instance, null);
+    }
+
+    public static void setServerRestVersion(Context context, Version version) {
+        SERVER_REST_VERSIONS.put(getActiveServer(context), version);
+    }
+
+    public static Version getServerRestVersion(Context context) {
+        return SERVER_REST_VERSIONS.get(getActiveServer(context));
     }
 
     public static void setSelectedMusicFolderId(Context context, String musicFolderId) {

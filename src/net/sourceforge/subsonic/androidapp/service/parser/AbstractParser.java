@@ -18,6 +18,8 @@
  */
 package net.sourceforge.subsonic.androidapp.service.parser;
 
+import net.sourceforge.subsonic.androidapp.domain.Version;
+import net.sourceforge.subsonic.androidapp.util.Util;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.Context;
@@ -112,6 +114,10 @@ public abstract class AbstractParser {
         String name = parser.getName();
         if ("subsonic-response".equals(name)) {
             rootElementFound = true;
+            String version = get("version");
+            if (version != null) {
+                Util.setServerRestVersion(context, new Version(version));
+            }
         }
         return name;
     }

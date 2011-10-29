@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -39,7 +38,6 @@ public class JukeboxService {
     private final DownloadServiceImpl downloadService;
 
     // TODO: Create shutdown method?
-    // TODO: Call getLicense earlier
     // TODO: Gain control
     // TODO: Excessive cpu usage?
     // TODO: Landscape mode
@@ -47,7 +45,7 @@ public class JukeboxService {
     // TODO: Widget
     // TODO: Shuffle play
     // TODO: Stop local playback when switching to RC.
-
+    // TODO: Change gui for toggling?
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
