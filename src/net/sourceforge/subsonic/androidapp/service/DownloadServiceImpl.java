@@ -439,6 +439,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             if (start) {
                 if (jukeboxEnabled) {
                     jukeboxService.skip(index);
+                    setPlayerState(STARTED);
                 } else {
                     bufferAndPlay();
                 }
@@ -513,7 +514,11 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     public synchronized void pause() {
         try {
             if (playerState == STARTED) {
-                mediaPlayer.pause();
+                if (jukeboxEnabled) {
+                    jukeboxService.stop();
+                } else {
+                    mediaPlayer.pause();
+                }
                 setPlayerState(PAUSED);
             }
         } catch (Exception x) {
@@ -524,7 +529,11 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     @Override
     public synchronized void start() {
         try {
-            mediaPlayer.start();
+            if (jukeboxEnabled) {
+                jukeboxService.start();
+            } else {
+                mediaPlayer.start();
+            }
             setPlayerState(STARTED);
         } catch (Exception x) {
             handleError(x);
@@ -636,7 +645,8 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         this.jukeboxEnabled = jukeboxEnabled;
         if (jukeboxEnabled) {
             updateJukeboxPlaylist();
-
+            reset();
+            
             // Cancel current download, if necessary.
             if (currentDownloading != null) {
                 currentDownloading.cancelDownload();

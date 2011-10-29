@@ -41,11 +41,11 @@ public class JukeboxService {
     // TODO: Gain control
     // TODO: Excessive cpu usage?
     // TODO: Landscape mode
-    // TODO: Pause/resume
     // TODO: Widget
     // TODO: Shuffle play
-    // TODO: Stop local playback when switching to RC.
     // TODO: Change gui for toggling?
+    // TODO: Skip support.
+    // TODO: Read regular status from server.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -80,6 +80,26 @@ public class JukeboxService {
             @Override
             public Void call() throws Exception {
                 getMusicService().skipJukebox(index, downloadService, null);
+                return null;
+            }
+        });
+    }
+
+    public void stop() {
+        tasks.add(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                getMusicService().stopJukebox(downloadService, null);
+                return null;
+            }
+        });
+    }
+
+    public void start() {
+        tasks.add(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                getMusicService().startJukebox(downloadService, null);
                 return null;
             }
         });

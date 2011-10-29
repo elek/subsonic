@@ -193,6 +193,16 @@ public class OfflineMusicService extends RESTMusicService {
     }
 
     @Override
+    public void stopJukebox(Context context, ProgressListener progressListener) {
+        throw new RuntimeException("Jukebox not available in offline mode");
+    }
+
+    @Override
+    public void startJukebox(Context context, ProgressListener progressListener) {
+        throw new RuntimeException("Jukebox not available in offline mode");
+    }
+
+    @Override
     public MusicDirectory getRandomSongs(int size, Context context, ProgressListener progressListener) throws Exception {
         File root = FileUtil.getMusicDirectory(context);
         List<File> children = new LinkedList<File>();

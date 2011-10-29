@@ -78,4 +78,8 @@ public interface MusicService {
     void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception;
 
     void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception;
+
+    void stopJukebox(Context context, ProgressListener progressListener) throws Exception;
+
+    void startJukebox(Context context, ProgressListener progressListener) throws Exception;
 }

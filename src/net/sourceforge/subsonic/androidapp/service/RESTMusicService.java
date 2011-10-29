@@ -527,19 +527,27 @@ public class RESTMusicService implements MusicService {
         parameterValues.add("set");
         parameterValues.addAll(ids);
 
-        Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
-        try {
-            new ErrorParser(context).parse(reader);
-        } finally {
-            Util.close(reader);
-        }
+        executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
     }
 
     @Override
     public void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception {
-
         List<String> parameterNames = Arrays.asList("action", "index");
         List<Object> parameterValues = Arrays.<Object>asList("skip", index);
+        executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
+    }
+
+    @Override
+    public void stopJukebox(Context context, ProgressListener progressListener) throws Exception {
+        executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("stop"));
+    }
+
+    @Override
+    public void startJukebox(Context context, ProgressListener progressListener) throws Exception {
+        executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("start"));
+    }
+
+    private void executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
         Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
         try {
             new ErrorParser(context).parse(reader);
