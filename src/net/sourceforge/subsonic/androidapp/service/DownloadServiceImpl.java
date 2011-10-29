@@ -563,8 +563,11 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             if (playerState == IDLE || playerState == DOWNLOADING || playerState == PREPARING) {
                 return 0;
             }
-//            Log.i(TAG, "Player pos: " + mediaPlayer.getCurrentPosition() + " of " + mediaPlayer.getDuration());
-            return mediaPlayer.getCurrentPosition();
+            if (jukeboxEnabled) {
+                return jukeboxService.getPosition();
+            } else {
+                return mediaPlayer.getCurrentPosition();
+            }
         } catch (Exception x) {
             handleError(x);
             return 0;

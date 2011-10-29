@@ -23,7 +23,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -34,8 +33,9 @@ public class JukeboxService {
 
     private static final String TAG = JukeboxService.class.getSimpleName();
 
-    private final BlockingQueue<Callable<?>> tasks = new LinkedBlockingQueue<Callable<?>>();
+    private final BlockingQueue<JukeboxTask> tasks = new LinkedBlockingQueue<JukeboxTask>();
     private final DownloadServiceImpl downloadService;
+    private int position;
 
     // TODO: Create shutdown method?
     // TODO: Gain control
@@ -44,7 +44,9 @@ public class JukeboxService {
     // TODO: Shuffle play
     // TODO: Change gui for toggling?
     // TODO: Progress support.
-    // TODO: Read regular status from server.
+    // TODO: Read regular status from server. Create "status" REST action.
+    // TODO: Method to remove tasks of certain type from queue?
+    // TODO: Schedule status task right after other tasks.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -59,7 +61,7 @@ public class JukeboxService {
     private void processTasks() {
         while (true) {
             try {
-                tasks.take().call();
+                tasks.take().execute();
             } catch (Throwable x) {
                 Log.e(TAG, "Failed to process jukebox task: " + x, x);
             }
@@ -75,53 +77,70 @@ public class JukeboxService {
     }
 
     public void skip(final int index, final int offsetSeconds) {
-        tasks.add(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                getMusicService().skipJukebox(index, offsetSeconds, downloadService, null);
-                return null;
-            }
-        });
+        tasks.add(new SkipTask(index, offsetSeconds));
     }
 
     public void stop() {
-        tasks.add(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                getMusicService().stopJukebox(downloadService, null);
-                return null;
-            }
-        });
+        tasks.add(new StopTask());
     }
 
     public void start() {
-        tasks.add(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-                getMusicService().startJukebox(downloadService, null);
-                return null;
-            }
-        });
+        tasks.add(new StartTask());
     }
 
     private MusicService getMusicService() {
         return MusicServiceFactory.getMusicService(downloadService);
     }
 
-    private class UpdatePlaylistTask implements Callable<Void> {
+    public int getPosition() {
+        return position;
+    }
+
+
+    private interface JukeboxTask {
+        void execute() throws Exception;
+    }
+
+    private class UpdatePlaylistTask implements JukeboxTask {
 
         private final List<String> ids;
-
-        public UpdatePlaylistTask(List<String> ids) {
+        UpdatePlaylistTask(List<String> ids) {
             this.ids = ids;
         }
 
         @Override
-        public Void call() throws Exception {
+        public void execute() throws Exception {
             getMusicService().updateJukeboxPlaylist(ids, downloadService, null);
             Log.d(TAG, "Updated jukebox with " + ids.size() + " songs.");
-            return null;
+        }
+    }
+
+    private class SkipTask implements JukeboxTask {
+        private final int index;
+        private final int offsetSeconds;
+
+        public SkipTask(int index, int offsetSeconds) {
+            this.index = index;
+            this.offsetSeconds = offsetSeconds;
         }
 
+        @Override
+        public void execute() throws Exception {
+            getMusicService().skipJukebox(index, offsetSeconds, downloadService, null);
+        }
+    }
+
+    private class StopTask implements JukeboxTask {
+        @Override
+        public void execute() throws Exception {
+            getMusicService().stopJukebox(downloadService, null);
+        }
+    }
+
+    private class StartTask implements JukeboxTask {
+        @Override
+        public void execute() throws Exception {
+            getMusicService().startJukebox(downloadService, null);
+        }
     }
 }
