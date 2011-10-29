@@ -202,6 +202,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             }
             revision++;
         }
+        updateJukeboxPlaylist();
 
         if (autoplay) {
             play(0);
@@ -212,7 +213,6 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
         }
         lifecycleSupport.serializeDownloadQueue();
-        updateJukeboxPlaylist();
     }
 
     private void updateJukeboxPlaylist() {

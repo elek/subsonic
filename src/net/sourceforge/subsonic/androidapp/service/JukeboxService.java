@@ -41,7 +41,6 @@ public class JukeboxService {
     // TODO: Gain control
     // TODO: Excessive cpu usage?
     // TODO: Landscape mode
-    // TODO: Widget
     // TODO: Shuffle play
     // TODO: Change gui for toggling?
     // TODO: Skip support.
