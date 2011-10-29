@@ -531,9 +531,9 @@ public class RESTMusicService implements MusicService {
     }
 
     @Override
-    public void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception {
-        List<String> parameterNames = Arrays.asList("action", "index");
-        List<Object> parameterValues = Arrays.<Object>asList("skip", index);
+    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
+        List<String> parameterNames = Arrays.asList("action", "index", "offset");
+        List<Object> parameterValues = Arrays.<Object>asList("skip", index, offsetSeconds);
         executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
     }
 

@@ -43,7 +43,7 @@ public class JukeboxService {
     // TODO: Landscape mode
     // TODO: Shuffle play
     // TODO: Change gui for toggling?
-    // TODO: Skip support.
+    // TODO: Progress support.
     // TODO: Read regular status from server.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
@@ -74,11 +74,11 @@ public class JukeboxService {
         tasks.add(new UpdatePlaylistTask(ids));
     }
 
-    public void skip(final int index) {
+    public void skip(final int index, final int offsetSeconds) {
         tasks.add(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                getMusicService().skipJukebox(index, downloadService, null);
+                getMusicService().skipJukebox(index, offsetSeconds, downloadService, null);
                 return null;
             }
         });

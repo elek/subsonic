@@ -438,7 +438,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
             if (start) {
                 if (jukeboxEnabled) {
-                    jukeboxService.skip(index);
+                    jukeboxService.skip(index, 0);
                     setPlayerState(STARTED);
                 } else {
                     bufferAndPlay();
@@ -462,7 +462,11 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     @Override
     public synchronized void seekTo(int position) {
         try {
-            mediaPlayer.seekTo(position);
+            if (jukeboxEnabled) {
+                jukeboxService.skip(getCurrentPlayingIndex(), position / 1000);
+            } else {
+                mediaPlayer.seekTo(position);
+            }
         } catch (Exception x) {
             handleError(x);
         }

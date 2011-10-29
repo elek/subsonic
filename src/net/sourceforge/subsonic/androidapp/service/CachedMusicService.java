@@ -194,8 +194,8 @@ public class CachedMusicService implements MusicService {
     }
 
     @Override
-    public void skipJukebox(int index, Context context, ProgressListener progressListener) throws Exception {
-        musicService.skipJukebox(index, context, progressListener);
+    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
+        musicService.skipJukebox(index, offsetSeconds, context, progressListener);
     }
 
     @Override

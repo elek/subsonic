@@ -188,7 +188,7 @@ public class OfflineMusicService extends RESTMusicService {
     }
 
     @Override
-    public void skipJukebox(int index, Context context, ProgressListener progressListener) {
+    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 
