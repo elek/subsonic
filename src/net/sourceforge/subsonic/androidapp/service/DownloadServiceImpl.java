@@ -654,6 +654,14 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         }
     }
 
+    void adjustJukeboxVolume() {
+        // TODO: Revisit this.
+        if (jukeboxEnabled) {
+            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+            Log.d(TAG, "Volume: " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + " of " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+        }
+    }
+
     private synchronized void bufferAndPlay() {
         reset();
 

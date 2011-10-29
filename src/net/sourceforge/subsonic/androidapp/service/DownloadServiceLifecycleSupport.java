@@ -222,7 +222,12 @@ public class DownloadServiceLifecycleSupport {
             case KeyEvent.KEYCODE_MEDIA_STOP:
                 downloadService.reset();
                 break;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                downloadService.adjustJukeboxVolume();
+                break;
             default:
+                break;
         }
     }
 
