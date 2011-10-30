@@ -29,6 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Sindre Mehus
@@ -43,6 +44,7 @@ public class JukeboxService {
     private final DownloadServiceImpl downloadService;
     private final AtomicInteger positionSeconds = new AtomicInteger();
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final AtomicLong sequenceNumber = new AtomicLong();
     private ScheduledFuture<?> statusUpdateFuture;
 
 
@@ -63,7 +65,7 @@ public class JukeboxService {
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
-    // TODO: Discard status updates that are issued before last command.
+    
 
 
     public JukeboxService(DownloadServiceImpl downloadService) {
@@ -96,8 +98,13 @@ public class JukeboxService {
 
     private void updateStatus() {
         try {
+            long seqNo = sequenceNumber.incrementAndGet();
             JukeboxStatus status = getMusicService().getJukeboxStatus(downloadService, null);
-            positionSeconds.set(status.getPositionSeconds() == null ? 0 : status.getPositionSeconds());
+
+            // Only update status if no other commands have been issued in the meantime.
+            if (seqNo == sequenceNumber.get()) {
+                positionSeconds.set(status.getPositionSeconds() == null ? 0 : status.getPositionSeconds());
+            }
         } catch (Throwable x) {
             Log.e(TAG, "Failed to update jukebox status: " + x, x);
         }
@@ -155,6 +162,11 @@ public class JukeboxService {
     }
 
     private abstract class JukeboxTask {
+
+        JukeboxTask() {
+            sequenceNumber.incrementAndGet();
+        }
+
         abstract void execute() throws Exception;
 
         @Override
