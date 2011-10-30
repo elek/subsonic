@@ -659,7 +659,6 @@ public class DownloadServiceImpl extends Service implements DownloadService {
                 currentDownloading.cancelDownload();
             }
         }
-        jukeboxService.setEnabled(jukeboxEnabled);
     }
 
     void adjustJukeboxVolume() {

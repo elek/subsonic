@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JukeboxService {
 
     private static final String TAG = JukeboxService.class.getSimpleName();
-    private static final long STATUS_UPDATE_INTERVAL_SECONDS = 10L;
+    private static final long STATUS_UPDATE_INTERVAL_SECONDS = 4L; // TODO
 
     private final TaskQueue tasks = new TaskQueue();
     private final DownloadServiceImpl downloadService;
@@ -59,10 +59,12 @@ public class JukeboxService {
     // TODO: Disable repeat.
     // TODO: Priority queue
     // TODO: Clean-up queue when adding tasks.
-    // TODO: Separate queue for status updates. (Or rather, no queue at all)
     // TODO: Estimate progress.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
+    // TODO: Stop status updates when disabling jukebox.
+    // TODO: Discard status updates that are issued before last command.
+
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -74,21 +76,21 @@ public class JukeboxService {
         }.start();
     }
 
-    // Rather start status updater when executing Start or Skip.
-    @Deprecated
-    public synchronized void setEnabled(boolean enabled) {
+    private synchronized void startStatusUpdate() {
+        stopStatusUpdate();
+        Runnable updateTask = new Runnable() {
+            @Override
+            public void run() {
+                updateStatus();
+            }
+        };
+        statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, 0L, STATUS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private synchronized void stopStatusUpdate() {
         if (statusUpdateFuture != null) {
             statusUpdateFuture.cancel(false);
             statusUpdateFuture = null;
-        }
-        if (enabled) {
-            Runnable updateTask = new Runnable() {
-                @Override
-                public void run() {
-                    updateStatus();
-                }
-            };
-            statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, 0L, STATUS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
         }
     }
 
@@ -120,14 +122,18 @@ public class JukeboxService {
     }
 
     public void skip(final int index, final int offsetSeconds) {
+        startStatusUpdate();
+        positionSeconds.set(offsetSeconds);
         tasks.add(new Skip(index, offsetSeconds));
     }
 
     public void stop() {
+        stopStatusUpdate();
         tasks.add(new Stop());
     }
 
     public void start() {
+        startStatusUpdate();
         tasks.add(new Start());
     }
 
