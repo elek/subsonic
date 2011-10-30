@@ -66,7 +66,23 @@ public class JukeboxService {
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
-    
+    // TODO: Detect song changes.
+    // TODO: Pause, then skip is broken.
+
+    /*
+
+    --X-------------X-------------X----------------X---------------------
+     start         sync          stop            start
+
+     |--------------|                                     pos + (now - start)
+                    |-------------|                       pos + (now - sync)
+                                  |----------------|      pos + (stop - sync)
+                                                   |----| pos + (now - start)
+
+
+     Delta = How much it has played since last sync.
+             Keep field delta, reset to 0 on each sync.  Increment when stopping/starting.
+     */
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -80,6 +96,7 @@ public class JukeboxService {
 
     private synchronized void startStatusUpdate() {
         stopStatusUpdate();
+        timeOfLastUpdate.set(System.currentTimeMillis());
         Runnable updateTask = new Runnable() {
             @Override
             public void run() {
@@ -90,6 +107,7 @@ public class JukeboxService {
     }
 
     private synchronized void stopStatusUpdate() {
+        timeOfLastUpdate.set(0);
         if (statusUpdateFuture != null) {
             statusUpdateFuture.cancel(false);
             statusUpdateFuture = null;
@@ -163,8 +181,8 @@ public class JukeboxService {
         return MusicServiceFactory.getMusicService(downloadService);
     }
 
-    public synchronized int getPositionSeconds() {
-        if (statusUpdateFuture != null && timeOfLastUpdate.get() != 0) {
+    public int getPositionSeconds() {
+        if (timeOfLastUpdate.get() != 0) {
             int secondsSinceLastUpdate = (int) ((System.currentTimeMillis() - timeOfLastUpdate.get()) / 1000L);
             return positionSeconds.get() + secondsSinceLastUpdate;
         } else {
