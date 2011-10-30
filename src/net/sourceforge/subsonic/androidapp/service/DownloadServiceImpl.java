@@ -564,7 +564,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
                 return 0;
             }
             if (jukeboxEnabled) {
-                return jukeboxService.getPosition();
+                return jukeboxService.getPositionSeconds() * 1000;
             } else {
                 return mediaPlayer.getCurrentPosition();
             }
@@ -659,6 +659,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
                 currentDownloading.cancelDownload();
             }
         }
+        jukeboxService.setEnabled(jukeboxEnabled);
     }
 
     void adjustJukeboxVolume() {

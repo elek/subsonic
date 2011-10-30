@@ -23,6 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import net.sourceforge.subsonic.androidapp.domain.Artist;
 import net.sourceforge.subsonic.androidapp.domain.Indexes;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
 import net.sourceforge.subsonic.androidapp.domain.Playlist;
@@ -199,6 +200,11 @@ public class OfflineMusicService extends RESTMusicService {
 
     @Override
     public void startJukebox(Context context, ProgressListener progressListener) {
+        throw new RuntimeException("Jukebox not available in offline mode");
+    }
+
+    @Override
+    public JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 

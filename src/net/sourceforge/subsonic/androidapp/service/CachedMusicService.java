@@ -21,6 +21,7 @@ package net.sourceforge.subsonic.androidapp.service;
 import android.content.Context;
 import android.graphics.Bitmap;
 import net.sourceforge.subsonic.androidapp.domain.Indexes;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
 import net.sourceforge.subsonic.androidapp.domain.Playlist;
@@ -206,6 +207,11 @@ public class CachedMusicService implements MusicService {
     @Override
     public void startJukebox(Context context, ProgressListener progressListener) throws Exception {
         musicService.startJukebox(context, progressListener);
+    }
+
+    @Override
+    public JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) throws Exception {
+        return musicService.getJukeboxStatus(context, progressListener);
     }
 
     private void checkSettingsChanged(Context context) {

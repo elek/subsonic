@@ -19,11 +19,16 @@
 package net.sourceforge.subsonic.androidapp.service;
 
 import android.util.Log;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Sindre Mehus
@@ -32,10 +37,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class JukeboxService {
 
     private static final String TAG = JukeboxService.class.getSimpleName();
+    private static final long STATUS_UPDATE_INTERVAL_SECONDS = 10L;
 
-    private final BlockingQueue<JukeboxTask> tasks = new LinkedBlockingQueue<JukeboxTask>();
+    private final TaskQueue tasks = new TaskQueue();
     private final DownloadServiceImpl downloadService;
-    private int position;
+    private final AtomicInteger positionSeconds = new AtomicInteger();
+    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> statusUpdateFuture;
+
 
     // TODO: Create shutdown method?
     // TODO: Gain control
@@ -45,8 +54,15 @@ public class JukeboxService {
     // TODO: Change gui for toggling?
     // TODO: Progress support.
     // TODO: Read regular status from server. Create "status" REST action.
-    // TODO: Method to remove tasks of certain type from queue?
     // TODO: Schedule status task right after other tasks.
+    // TODO: Test shuffle.
+    // TODO: Disable repeat.
+    // TODO: Priority queue
+    // TODO: Clean-up queue when adding tasks.
+    // TODO: Separate queue for status updates. (Or rather, no queue at all)
+    // TODO: Estimate progress.
+    // TODO: Persist RC state.
+    // TODO: Minimize status updates.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -56,6 +72,33 @@ public class JukeboxService {
                 processTasks();
             }
         }.start();
+    }
+
+    // Rather start status updater when executing Start or Skip.
+    @Deprecated
+    public synchronized void setEnabled(boolean enabled) {
+        if (statusUpdateFuture != null) {
+            statusUpdateFuture.cancel(false);
+            statusUpdateFuture = null;
+        }
+        if (enabled) {
+            Runnable updateTask = new Runnable() {
+                @Override
+                public void run() {
+                    updateStatus();
+                }
+            };
+            statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, 0L, STATUS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        }
+    }
+
+    private void updateStatus() {
+        try {
+            JukeboxStatus status = getMusicService().getJukeboxStatus(downloadService, null);
+            positionSeconds.set(status.getPositionSeconds() == null ? 0 : status.getPositionSeconds());
+        } catch (Throwable x) {
+            Log.e(TAG, "Failed to update jukebox status: " + x, x);
+        }
     }
 
     private void processTasks() {
@@ -73,38 +116,51 @@ public class JukeboxService {
         for (DownloadFile file : downloadService.getDownloads()) {
             ids.add(file.getSong().getId());
         }
-        tasks.add(new UpdatePlaylistTask(ids));
+        tasks.add(new SetPlaylist(ids));
     }
 
     public void skip(final int index, final int offsetSeconds) {
-        tasks.add(new SkipTask(index, offsetSeconds));
+        tasks.add(new Skip(index, offsetSeconds));
     }
 
     public void stop() {
-        tasks.add(new StopTask());
+        tasks.add(new Stop());
     }
 
     public void start() {
-        tasks.add(new StartTask());
+        tasks.add(new Start());
     }
 
     private MusicService getMusicService() {
         return MusicServiceFactory.getMusicService(downloadService);
     }
 
-    public int getPosition() {
-        return position;
+    public int getPositionSeconds() {
+        return positionSeconds.get();
     }
 
-
-    private interface JukeboxTask {
-        void execute() throws Exception;
+    private static class TaskQueue extends LinkedBlockingQueue<JukeboxTask> {
+        @Override
+        public boolean add(JukeboxTask jukeboxTask) {
+            boolean b = super.add(jukeboxTask);
+            Log.d(TAG, "Task queue: " + toString());
+            return b;
+        }
     }
 
-    private class UpdatePlaylistTask implements JukeboxTask {
+    private abstract class JukeboxTask {
+        abstract void execute() throws Exception;
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName();
+        }
+    }
+
+    private class SetPlaylist extends JukeboxTask {
 
         private final List<String> ids;
-        UpdatePlaylistTask(List<String> ids) {
+        SetPlaylist(List<String> ids) {
             this.ids = ids;
         }
 
@@ -115,11 +171,11 @@ public class JukeboxService {
         }
     }
 
-    private class SkipTask implements JukeboxTask {
+    private class Skip extends JukeboxTask {
         private final int index;
         private final int offsetSeconds;
 
-        public SkipTask(int index, int offsetSeconds) {
+        public Skip(int index, int offsetSeconds) {
             this.index = index;
             this.offsetSeconds = offsetSeconds;
         }
@@ -130,17 +186,18 @@ public class JukeboxService {
         }
     }
 
-    private class StopTask implements JukeboxTask {
+    private class Stop extends JukeboxTask {
         @Override
         public void execute() throws Exception {
             getMusicService().stopJukebox(downloadService, null);
         }
     }
 
-    private class StartTask implements JukeboxTask {
+    private class Start extends JukeboxTask {
         @Override
         public void execute() throws Exception {
             getMusicService().startJukebox(downloadService, null);
         }
     }
+
 }

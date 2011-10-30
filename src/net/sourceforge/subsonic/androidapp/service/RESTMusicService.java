@@ -28,6 +28,7 @@ import android.net.NetworkInfo;
 import android.util.Log;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.Indexes;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.Lyrics;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
@@ -39,6 +40,7 @@ import net.sourceforge.subsonic.androidapp.domain.Version;
 import net.sourceforge.subsonic.androidapp.service.parser.AlbumListParser;
 import net.sourceforge.subsonic.androidapp.service.parser.ErrorParser;
 import net.sourceforge.subsonic.androidapp.service.parser.IndexesParser;
+import net.sourceforge.subsonic.androidapp.service.parser.JukeboxStatusParser;
 import net.sourceforge.subsonic.androidapp.service.parser.LicenseParser;
 import net.sourceforge.subsonic.androidapp.service.parser.LyricsParser;
 import net.sourceforge.subsonic.androidapp.service.parser.MusicDirectoryParser;
@@ -545,6 +547,16 @@ public class RESTMusicService implements MusicService {
     @Override
     public void startJukebox(Context context, ProgressListener progressListener) throws Exception {
         executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("start"));
+    }
+
+    @Override
+    public JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) throws Exception {
+        Reader reader = getReader(context, progressListener, "jukeboxControl", null, "action", "get");
+        try {
+            return new JukeboxStatusParser(context).parse(reader);
+        } finally {
+            Util.close(reader);
+        }
     }
 
     private void executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
