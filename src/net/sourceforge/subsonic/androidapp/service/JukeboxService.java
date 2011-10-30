@@ -22,6 +22,7 @@ import android.util.Log;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -60,13 +61,11 @@ public class JukeboxService {
     // TODO: Test shuffle.
     // TODO: Disable repeat.
     // TODO: Priority queue
-    // TODO: Clean-up queue when adding tasks.
     // TODO: Estimate progress.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
     
-
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -121,6 +120,10 @@ public class JukeboxService {
     }
 
     public void updatePlaylist() {
+        tasks.remove(Skip.class);
+        tasks.remove(Stop.class);
+        tasks.remove(Start.class);
+
         List<String> ids = new ArrayList<String>();
         for (DownloadFile file : downloadService.getDownloads()) {
             ids.add(file.getSong().getId());
@@ -129,17 +132,27 @@ public class JukeboxService {
     }
 
     public void skip(final int index, final int offsetSeconds) {
+        tasks.remove(Skip.class);
+        tasks.remove(Stop.class);
+        tasks.remove(Start.class);
+
         startStatusUpdate();
         positionSeconds.set(offsetSeconds);
         tasks.add(new Skip(index, offsetSeconds));
     }
 
     public void stop() {
+        tasks.remove(Stop.class);
+        tasks.remove(Start.class);
+
         stopStatusUpdate();
         tasks.add(new Stop());
     }
 
     public void start() {
+        tasks.remove(Stop.class);
+        tasks.remove(Start.class);
+
         startStatusUpdate();
         tasks.add(new Start());
     }
@@ -152,12 +165,30 @@ public class JukeboxService {
         return positionSeconds.get();
     }
 
-    private static class TaskQueue extends LinkedBlockingQueue<JukeboxTask> {
-        @Override
-        public boolean add(JukeboxTask jukeboxTask) {
-            boolean b = super.add(jukeboxTask);
-            Log.d(TAG, "Task queue: " + toString());
-            return b;
+    private static class TaskQueue {
+
+        private final LinkedBlockingQueue<JukeboxTask> queue = new LinkedBlockingQueue<JukeboxTask>();
+
+        void add(JukeboxTask jukeboxTask) {
+            queue.add(jukeboxTask);
+        }
+
+        JukeboxTask take() throws InterruptedException {
+            return queue.take();
+        }
+
+        void remove(Class<? extends JukeboxTask> clazz) {
+            try {
+                Iterator<JukeboxTask> iterator = queue.iterator();
+                while (iterator.hasNext()) {
+                    JukeboxTask task = iterator.next();
+                    if (clazz.equals(task.getClass())) {
+                        iterator.remove();
+                    }
+                }
+            } catch (Throwable x) {
+                Log.w(TAG, "Failed to clean-up task queue.", x);
+            }
         }
     }
 
