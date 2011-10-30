@@ -47,6 +47,7 @@ public class JukeboxService {
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private final AtomicLong sequenceNumber = new AtomicLong();
     private ScheduledFuture<?> statusUpdateFuture;
+    private AtomicLong timeOfLastUpdate = new AtomicLong();
 
 
     // TODO: Create shutdown method?
@@ -102,6 +103,7 @@ public class JukeboxService {
 
             // Only update status if no other commands have been issued in the meantime.
             if (seqNo == sequenceNumber.get()) {
+                timeOfLastUpdate.set(System.currentTimeMillis());
                 positionSeconds.set(status.getPositionSeconds() == null ? 0 : status.getPositionSeconds());
             }
         } catch (Throwable x) {
@@ -161,8 +163,13 @@ public class JukeboxService {
         return MusicServiceFactory.getMusicService(downloadService);
     }
 
-    public int getPositionSeconds() {
-        return positionSeconds.get();
+    public synchronized int getPositionSeconds() {
+        if (statusUpdateFuture != null && timeOfLastUpdate.get() != 0) {
+            int secondsSinceLastUpdate = (int) ((System.currentTimeMillis() - timeOfLastUpdate.get()) / 1000L);
+            return positionSeconds.get() + secondsSinceLastUpdate;
+        } else {
+            return positionSeconds.get();
+        }
     }
 
     private static class TaskQueue {
