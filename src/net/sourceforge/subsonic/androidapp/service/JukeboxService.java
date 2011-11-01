@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import android.util.Log;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
  * @author Sindre Mehus
@@ -47,6 +48,7 @@ public class JukeboxService {
     private ScheduledFuture<?> statusUpdateFuture;
     private AtomicLong timeOfLastUpdate = new AtomicLong();
     private JukeboxStatus jukeboxStatus;
+    private float gain = 0.5f;
 
 
     // TODO: Create shutdown method?
@@ -64,6 +66,7 @@ public class JukeboxService {
     // TODO: Pause, then skip is broken.
     // TODO: Toast when changing gain.
     // TODO: Widget broken?
+    // TODO: Make sure position < duration.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -110,6 +113,9 @@ public class JukeboxService {
     private void onStatusUpdate(JukeboxStatus jukeboxStatus) {
         timeOfLastUpdate.set(System.currentTimeMillis());
         this.jukeboxStatus = jukeboxStatus;
+        if (jukeboxStatus.getGain() != null) {
+            gain = jukeboxStatus.getGain();
+        }
     }
 
     private void processTasks() {
@@ -163,8 +169,17 @@ public class JukeboxService {
         tasks.add(new Start());
     }
 
-    public void adjustVolume(boolean up) {
-        tasks.add(new AdjustVolume(up));
+    public synchronized void adjustVolume(boolean up) {
+        float delta = up ? 1.0f/7 : -1.0f/7;
+        gain += delta;
+        gain = Math.max(gain, 0.0f);
+        gain = Math.min(gain, 1.0f);
+
+        tasks.remove(SetGain.class);
+        tasks.add(new SetGain(gain));
+
+        Util.toast(downloadService, "Jukebox volume " + (int) (gain * 100.0F) + " %");
+        // TODO: Show toast
     }
 
     private MusicService getMusicService() {
@@ -268,21 +283,16 @@ public class JukeboxService {
         }
     }
 
-    private class AdjustVolume extends JukeboxTask {
+    private class SetGain extends JukeboxTask {
 
-        private final boolean up;
+        private final float gain;
 
-        private AdjustVolume(boolean up) {
-            this.up = up;
+        private SetGain(float gain) {
+            this.gain = gain;
         }
 
         @Override
            JukeboxStatus execute() throws Exception {
-            float gain = jukeboxStatus == null || jukeboxStatus.getGain() == null ? 0.5f : jukeboxStatus.getGain();
-            float delta = up ? 0.15f : -0.15f;
-            gain += delta;
-            gain = Math.max(gain, 0.0f);
-            gain = Math.min(gain, 1.0f);
             return getMusicService().setJukeboxGain(gain, downloadService, null);
         }
        }
