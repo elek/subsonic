@@ -16,7 +16,6 @@
             a:shadowRadius="2.75"
             a:paddingLeft="32dp"
             a:paddingRight="32dp"
-            a:paddingTop="5dp"
             a:paddingBottom="12dp"
             />
 
@@ -24,8 +23,6 @@
                  style="@android:style/Widget.ProgressBar.Horizontal"
                  a:layout_width="fill_parent"
                  a:layout_height="wrap_content"
-                 a:paddingLeft="2dp"
-                 a:paddingRight="2dp"
                  a:paddingBottom="3dp"
             />
 

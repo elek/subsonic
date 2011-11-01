@@ -106,7 +106,7 @@ public class JukeboxService {
 
     private void updateStatus() {
         try {
-            long seqNo = sequenceNumber.incrementAndGet();
+            long seqNo = sequenceNumber.get();
             JukeboxStatus status = getMusicService().getJukeboxStatus(downloadService, null);
 
             // Only update status if no other commands have been issued in the meantime.
@@ -129,8 +129,13 @@ public class JukeboxService {
     private void processTasks() {
         while (true) {
             try {
+                long seqNo = sequenceNumber.get();
                 JukeboxStatus status = tasks.take().execute();
-                onStatusUpdate(status);
+
+                // Only update status if no other commands have been issued in the meantime.
+                if (seqNo == sequenceNumber.get()) {
+                    onStatusUpdate(status);
+                }
             } catch (Throwable x) {
                 Log.e(TAG, "Failed to process jukebox task: " + x, x);
             }
