@@ -63,6 +63,7 @@ public class JukeboxService {
     // TODO: Detect song changes.
     // TODO: Pause, then skip is broken.
     // TODO: Toast when changing gain.
+    // TODO: Widget broken?
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -140,6 +141,9 @@ public class JukeboxService {
         tasks.remove(Start.class);
 
         startStatusUpdate();
+        if (jukeboxStatus != null) {
+            jukeboxStatus.setPositionSeconds(offsetSeconds);
+        }
         tasks.add(new Skip(index, offsetSeconds));
     }
 
