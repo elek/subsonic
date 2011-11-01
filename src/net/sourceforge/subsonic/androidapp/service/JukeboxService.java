@@ -18,6 +18,16 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import android.content.Context;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+import net.sourceforge.subsonic.androidapp.R;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -27,10 +37,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import android.util.Log;
-import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
-import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
  * @author Sindre Mehus
@@ -50,6 +56,7 @@ public class JukeboxService {
     private JukeboxStatus jukeboxStatus;
     private float gain = 0.5f;
 
+    private VolumeToast volumeToast;
 
     // TODO: Create shutdown method?
     // TODO: Gain control
@@ -67,6 +74,7 @@ public class JukeboxService {
     // TODO: Toast when changing gain.
     // TODO: Widget broken?
     // TODO: Make sure position < duration.
+    // TODO: Show position when moving slider
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -170,7 +178,7 @@ public class JukeboxService {
     }
 
     public synchronized void adjustVolume(boolean up) {
-        float delta = up ? 1.0f/7 : -1.0f/7;
+        float delta = up ? 0.1f : -0.1f;
         gain += delta;
         gain = Math.max(gain, 0.0f);
         gain = Math.min(gain, 1.0f);
@@ -178,8 +186,10 @@ public class JukeboxService {
         tasks.remove(SetGain.class);
         tasks.add(new SetGain(gain));
 
-        Util.toast(downloadService, "Jukebox volume " + (int) (gain * 100.0F) + " %");
-        // TODO: Show toast
+        if (volumeToast == null) {
+            volumeToast = new VolumeToast(downloadService);
+        }
+        volumeToast.setVolume(gain);
     }
 
     private MusicService getMusicService() {
@@ -292,9 +302,29 @@ public class JukeboxService {
         }
 
         @Override
-           JukeboxStatus execute() throws Exception {
+        JukeboxStatus execute() throws Exception {
             return getMusicService().setJukeboxGain(gain, downloadService, null);
         }
-       }
+    }
 
+    private static class VolumeToast extends Toast {
+
+        private final ProgressBar progressBar;
+
+        public VolumeToast(Context context) {
+            super(context);
+            setDuration(Toast.LENGTH_SHORT);
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View view = inflater.inflate(R.layout.jukebox_volume, null);
+            progressBar = (ProgressBar) view.findViewById(R.id.jukebox_volume_progress_bar);
+
+            setView(view);
+            setGravity(Gravity.TOP, 0, 0);
+        }
+
+        public void setVolume(float volume) {
+            progressBar.setProgress(Math.round(100 * volume));
+            show();
+        }
+    }
 }
