@@ -26,6 +26,7 @@ public class JukeboxStatus {
 
     private Integer positionSeconds;
     private Integer currentPlayingIndex;
+    private boolean playing;
 
     public Integer getPositionSeconds() {
         return positionSeconds;
@@ -39,7 +40,15 @@ public class JukeboxStatus {
         return currentPlayingIndex;
     }
 
-    public void setCurrentPlayingIndex(Integer currentPlayingIndex) {
+    public void setCurrentIndex(Integer currentPlayingIndex) {
         this.currentPlayingIndex = currentPlayingIndex;
+    }
+
+    public boolean isPlaying() {
+        return playing;
+    }
+
+    public void setPlaying(boolean playing) {
+        this.playing = playing;
     }
 }

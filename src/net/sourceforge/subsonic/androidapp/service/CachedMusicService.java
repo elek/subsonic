@@ -18,26 +18,27 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.http.HttpResponse;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import net.sourceforge.subsonic.androidapp.domain.Indexes;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+import net.sourceforge.subsonic.androidapp.domain.Lyrics;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
 import net.sourceforge.subsonic.androidapp.domain.Playlist;
-import net.sourceforge.subsonic.androidapp.domain.Version;
-import net.sourceforge.subsonic.androidapp.domain.SearchResult;
 import net.sourceforge.subsonic.androidapp.domain.SearchCritera;
-import net.sourceforge.subsonic.androidapp.domain.Lyrics;
+import net.sourceforge.subsonic.androidapp.domain.SearchResult;
+import net.sourceforge.subsonic.androidapp.domain.Version;
 import net.sourceforge.subsonic.androidapp.util.CancellableTask;
 import net.sourceforge.subsonic.androidapp.util.LRUCache;
 import net.sourceforge.subsonic.androidapp.util.ProgressListener;
 import net.sourceforge.subsonic.androidapp.util.TimeLimitedCache;
 import net.sourceforge.subsonic.androidapp.util.Util;
-import org.apache.http.HttpResponse;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Sindre Mehus
@@ -190,23 +191,23 @@ public class CachedMusicService implements MusicService {
     }
 
     @Override
-    public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
-        musicService.updateJukeboxPlaylist(ids, context, progressListener);
+    public JukeboxStatus updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
+        return musicService.updateJukeboxPlaylist(ids, context, progressListener);
     }
 
     @Override
-    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
-        musicService.skipJukebox(index, offsetSeconds, context, progressListener);
+    public JukeboxStatus skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
+        return musicService.skipJukebox(index, offsetSeconds, context, progressListener);
     }
 
     @Override
-    public void stopJukebox(Context context, ProgressListener progressListener) throws Exception {
-        musicService.stopJukebox(context, progressListener);
+    public JukeboxStatus stopJukebox(Context context, ProgressListener progressListener) throws Exception {
+        return musicService.stopJukebox(context, progressListener);
     }
 
     @Override
-    public void startJukebox(Context context, ProgressListener progressListener) throws Exception {
-        musicService.startJukebox(context, progressListener);
+    public JukeboxStatus startJukebox(Context context, ProgressListener progressListener) throws Exception {
+        return musicService.startJukebox(context, progressListener);
     }
 
     @Override

@@ -18,13 +18,12 @@
  */
 package net.sourceforge.subsonic.androidapp.service.parser;
 
-import android.content.Context;
-import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
-import net.sourceforge.subsonic.androidapp.domain.ServerInfo;
-import net.sourceforge.subsonic.androidapp.domain.Version;
+import java.io.Reader;
+
 import org.xmlpull.v1.XmlPullParser;
 
-import java.io.Reader;
+import android.content.Context;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 
 /**
  * @author Sindre Mehus
@@ -45,9 +44,10 @@ public class JukeboxStatusParser extends AbstractParser {
             eventType = nextParseEvent();
             if (eventType == XmlPullParser.START_TAG) {
                 String name = getElementName();
-                if ("jukeboxPlaylist".equals(name)) {
+                if ("jukeboxPlaylist".equals(name) || "jukeboxStatus".equals(name)) {
                     jukeboxStatus.setPositionSeconds(getInteger("position"));
-                    jukeboxStatus.setCurrentPlayingIndex(getInteger("currentIndex"));
+                    jukeboxStatus.setCurrentIndex(getInteger("currentIndex"));
+                    jukeboxStatus.setPlaying(getBoolean("playing"));
                 }
             }
         } while (eventType != XmlPullParser.END_DOCUMENT);

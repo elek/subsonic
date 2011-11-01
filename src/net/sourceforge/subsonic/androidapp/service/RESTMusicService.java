@@ -18,6 +18,47 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.params.ConnManagerParams;
+import org.apache.http.conn.params.ConnPerRouteBean;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.protocol.HttpContext;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -58,46 +99,6 @@ import net.sourceforge.subsonic.androidapp.util.Constants;
 import net.sourceforge.subsonic.androidapp.util.FileUtil;
 import net.sourceforge.subsonic.androidapp.util.ProgressListener;
 import net.sourceforge.subsonic.androidapp.util.Util;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.params.ConnPerRouteBean;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.ExecutionContext;
-import org.apache.http.protocol.HttpContext;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Sindre Mehus
@@ -514,7 +515,7 @@ public class RESTMusicService implements MusicService {
     }
 
     @Override
-    public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
+    public JukeboxStatus updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
 
         if (!isServerAtLeast17(context)) {
             throw new Exception("Jukebox not supported, server version is too old.");
@@ -529,40 +530,35 @@ public class RESTMusicService implements MusicService {
         parameterValues.add("set");
         parameterValues.addAll(ids);
 
-        executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
+        return executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
     }
 
     @Override
-    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
+    public JukeboxStatus skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception {
         List<String> parameterNames = Arrays.asList("action", "index", "offset");
         List<Object> parameterValues = Arrays.<Object>asList("skip", index, offsetSeconds);
-        executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
+        return executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
     }
 
     @Override
-    public void stopJukebox(Context context, ProgressListener progressListener) throws Exception {
-        executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("stop"));
+    public JukeboxStatus stopJukebox(Context context, ProgressListener progressListener) throws Exception {
+        return executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("stop"));
     }
 
     @Override
-    public void startJukebox(Context context, ProgressListener progressListener) throws Exception {
-        executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("start"));
+    public JukeboxStatus startJukebox(Context context, ProgressListener progressListener) throws Exception {
+        return executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("start"));
     }
 
     @Override
     public JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) throws Exception {
-        Reader reader = getReader(context, progressListener, "jukeboxControl", null, "action", "get");
-        try {
-            return new JukeboxStatusParser(context).parse(reader);
-        } finally {
-            Util.close(reader);
-        }
+        return executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("status"));
     }
 
-    private void executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
+    private JukeboxStatus executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
         Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
         try {
-            new ErrorParser(context).parse(reader);
+            return new JukeboxStatusParser(context).parse(reader);
         } finally {
             Util.close(reader);
         }

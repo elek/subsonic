@@ -18,23 +18,6 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import net.sourceforge.subsonic.androidapp.domain.Artist;
-import net.sourceforge.subsonic.androidapp.domain.Indexes;
-import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
-import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
-import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
-import net.sourceforge.subsonic.androidapp.domain.Playlist;
-import net.sourceforge.subsonic.androidapp.domain.SearchResult;
-import net.sourceforge.subsonic.androidapp.domain.SearchCritera;
-import net.sourceforge.subsonic.androidapp.domain.Lyrics;
-import net.sourceforge.subsonic.androidapp.util.Constants;
-import net.sourceforge.subsonic.androidapp.util.FileUtil;
-import net.sourceforge.subsonic.androidapp.util.ProgressListener;
-import net.sourceforge.subsonic.androidapp.util.Util;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -45,6 +28,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import net.sourceforge.subsonic.androidapp.domain.Artist;
+import net.sourceforge.subsonic.androidapp.domain.Indexes;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+import net.sourceforge.subsonic.androidapp.domain.Lyrics;
+import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
+import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
+import net.sourceforge.subsonic.androidapp.domain.Playlist;
+import net.sourceforge.subsonic.androidapp.domain.SearchCritera;
+import net.sourceforge.subsonic.androidapp.domain.SearchResult;
+import net.sourceforge.subsonic.androidapp.util.Constants;
+import net.sourceforge.subsonic.androidapp.util.FileUtil;
+import net.sourceforge.subsonic.androidapp.util.ProgressListener;
+import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
  * @author Sindre Mehus
@@ -184,22 +184,22 @@ public class OfflineMusicService extends RESTMusicService {
     }
 
     @Override
-    public void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) {
+    public JukeboxStatus updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 
     @Override
-    public void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) {
+    public JukeboxStatus skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 
     @Override
-    public void stopJukebox(Context context, ProgressListener progressListener) {
+    public JukeboxStatus stopJukebox(Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 
     @Override
-    public void startJukebox(Context context, ProgressListener progressListener) {
+    public JukeboxStatus startJukebox(Context context, ProgressListener progressListener) {
         throw new RuntimeException("Jukebox not available in offline mode");
     }
 

@@ -18,22 +18,23 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.util.List;
+
+import org.apache.http.HttpResponse;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import net.sourceforge.subsonic.androidapp.domain.Indexes;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+import net.sourceforge.subsonic.androidapp.domain.Lyrics;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.MusicFolder;
 import net.sourceforge.subsonic.androidapp.domain.Playlist;
-import net.sourceforge.subsonic.androidapp.domain.Version;
-import net.sourceforge.subsonic.androidapp.domain.SearchResult;
 import net.sourceforge.subsonic.androidapp.domain.SearchCritera;
-import net.sourceforge.subsonic.androidapp.domain.Lyrics;
+import net.sourceforge.subsonic.androidapp.domain.SearchResult;
+import net.sourceforge.subsonic.androidapp.domain.Version;
 import net.sourceforge.subsonic.androidapp.util.CancellableTask;
 import net.sourceforge.subsonic.androidapp.util.ProgressListener;
-import org.apache.http.HttpResponse;
-
-import java.util.List;
 
 /**
  * @author Sindre Mehus
@@ -76,13 +77,13 @@ public interface MusicService {
 
     String getVideoUrl(Context context, String id);
 
-    void updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception;
+    JukeboxStatus updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception;
 
-    void skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception;
+    JukeboxStatus skipJukebox(int index, int offsetSeconds, Context context, ProgressListener progressListener) throws Exception;
 
-    void stopJukebox(Context context, ProgressListener progressListener) throws Exception;
+    JukeboxStatus stopJukebox(Context context, ProgressListener progressListener) throws Exception;
 
-    void startJukebox(Context context, ProgressListener progressListener) throws Exception;
+    JukeboxStatus startJukebox(Context context, ProgressListener progressListener) throws Exception;
 
     JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) throws Exception;
 }

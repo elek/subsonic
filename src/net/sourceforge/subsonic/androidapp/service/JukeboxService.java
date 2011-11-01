@@ -18,9 +18,6 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
-import android.util.Log;
-import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -29,8 +26,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import android.util.Log;
+import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 
 /**
  * @author Sindre Mehus
@@ -43,11 +42,11 @@ public class JukeboxService {
 
     private final TaskQueue tasks = new TaskQueue();
     private final DownloadServiceImpl downloadService;
-    private final AtomicInteger positionSeconds = new AtomicInteger();
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private final AtomicLong sequenceNumber = new AtomicLong();
     private ScheduledFuture<?> statusUpdateFuture;
     private AtomicLong timeOfLastUpdate = new AtomicLong();
+    private JukeboxStatus jukeboxStatus;
 
 
     // TODO: Create shutdown method?
@@ -69,21 +68,6 @@ public class JukeboxService {
     // TODO: Detect song changes.
     // TODO: Pause, then skip is broken.
 
-    /*
-
-    --X-------------X-------------X----------------X---------------------
-     start         sync          stop            start
-
-     |--------------|                                     pos + (now - start)
-                    |-------------|                       pos + (now - sync)
-                                  |----------------|      pos + (stop - sync)
-                                                   |----| pos + (now - start)
-
-
-     Delta = How much it has played since last sync.
-             Keep field delta, reset to 0 on each sync.  Increment when stopping/starting.
-     */
-
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
         new Thread() {
@@ -96,7 +80,6 @@ public class JukeboxService {
 
     private synchronized void startStatusUpdate() {
         stopStatusUpdate();
-        timeOfLastUpdate.set(System.currentTimeMillis());
         Runnable updateTask = new Runnable() {
             @Override
             public void run() {
@@ -107,7 +90,6 @@ public class JukeboxService {
     }
 
     private synchronized void stopStatusUpdate() {
-        timeOfLastUpdate.set(0);
         if (statusUpdateFuture != null) {
             statusUpdateFuture.cancel(false);
             statusUpdateFuture = null;
@@ -121,18 +103,23 @@ public class JukeboxService {
 
             // Only update status if no other commands have been issued in the meantime.
             if (seqNo == sequenceNumber.get()) {
-                timeOfLastUpdate.set(System.currentTimeMillis());
-                positionSeconds.set(status.getPositionSeconds() == null ? 0 : status.getPositionSeconds());
+                onStatusUpdate(status);
             }
         } catch (Throwable x) {
             Log.e(TAG, "Failed to update jukebox status: " + x, x);
         }
     }
 
+    private void onStatusUpdate(JukeboxStatus jukeboxStatus) {
+        timeOfLastUpdate.set(System.currentTimeMillis());
+        this.jukeboxStatus = jukeboxStatus;
+    }
+
     private void processTasks() {
         while (true) {
             try {
-                tasks.take().execute();
+                JukeboxStatus status = tasks.take().execute();
+                onStatusUpdate(status);
             } catch (Throwable x) {
                 Log.e(TAG, "Failed to process jukebox task: " + x, x);
             }
@@ -157,7 +144,6 @@ public class JukeboxService {
         tasks.remove(Start.class);
 
         startStatusUpdate();
-        positionSeconds.set(offsetSeconds);
         tasks.add(new Skip(index, offsetSeconds));
     }
 
@@ -182,12 +168,16 @@ public class JukeboxService {
     }
 
     public int getPositionSeconds() {
-        if (timeOfLastUpdate.get() != 0) {
-            int secondsSinceLastUpdate = (int) ((System.currentTimeMillis() - timeOfLastUpdate.get()) / 1000L);
-            return positionSeconds.get() + secondsSinceLastUpdate;
-        } else {
-            return positionSeconds.get();
+        if (jukeboxStatus == null || timeOfLastUpdate.get() == 0) {
+            return 0;
         }
+
+        if (jukeboxStatus.isPlaying()) {
+            int secondsSinceLastUpdate = (int) ((System.currentTimeMillis() - timeOfLastUpdate.get()) / 1000L);
+            return jukeboxStatus.getPositionSeconds() + secondsSinceLastUpdate;
+        }
+
+        return jukeboxStatus.getPositionSeconds();
     }
 
     private static class TaskQueue {
@@ -223,7 +213,7 @@ public class JukeboxService {
             sequenceNumber.incrementAndGet();
         }
 
-        abstract void execute() throws Exception;
+        abstract JukeboxStatus execute() throws Exception;
 
         @Override
         public String toString() {
@@ -234,14 +224,14 @@ public class JukeboxService {
     private class SetPlaylist extends JukeboxTask {
 
         private final List<String> ids;
+
         SetPlaylist(List<String> ids) {
             this.ids = ids;
         }
 
         @Override
-        public void execute() throws Exception {
-            getMusicService().updateJukeboxPlaylist(ids, downloadService, null);
-            Log.d(TAG, "Updated jukebox with " + ids.size() + " songs.");
+        JukeboxStatus execute() throws Exception {
+            return getMusicService().updateJukeboxPlaylist(ids, downloadService, null);
         }
     }
 
@@ -249,28 +239,28 @@ public class JukeboxService {
         private final int index;
         private final int offsetSeconds;
 
-        public Skip(int index, int offsetSeconds) {
+        Skip(int index, int offsetSeconds) {
             this.index = index;
             this.offsetSeconds = offsetSeconds;
         }
 
         @Override
-        public void execute() throws Exception {
-            getMusicService().skipJukebox(index, offsetSeconds, downloadService, null);
+        JukeboxStatus execute() throws Exception {
+            return getMusicService().skipJukebox(index, offsetSeconds, downloadService, null);
         }
     }
 
     private class Stop extends JukeboxTask {
         @Override
-        public void execute() throws Exception {
-            getMusicService().stopJukebox(downloadService, null);
+        JukeboxStatus execute() throws Exception {
+            return getMusicService().stopJukebox(downloadService, null);
         }
     }
 
     private class Start extends JukeboxTask {
         @Override
-        public void execute() throws Exception {
-            getMusicService().startJukebox(downloadService, null);
+        JukeboxStatus execute() throws Exception {
+            return getMusicService().startJukebox(downloadService, null);
         }
     }
 
