@@ -62,6 +62,7 @@ public class JukeboxService {
     // TODO: Stop status updates when disabling jukebox.
     // TODO: Detect song changes.
     // TODO: Pause, then skip is broken.
+    // TODO: Toast when changing gain.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;

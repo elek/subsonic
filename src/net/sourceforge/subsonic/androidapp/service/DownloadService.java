@@ -18,13 +18,13 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.util.List;
+
 import net.sourceforge.subsonic.androidapp.audiofx.EqualizerController;
 import net.sourceforge.subsonic.androidapp.audiofx.VisualizerController;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
 import net.sourceforge.subsonic.androidapp.domain.RepeatMode;
-
-import java.util.List;
 
 /**
  * @author Sindre Mehus
@@ -107,4 +107,6 @@ public interface DownloadService {
     boolean isJukeboxEnabled();
 
     void setJukeboxEnabled(boolean b);
+
+    void adjustJukeboxVolume(boolean up);
 }

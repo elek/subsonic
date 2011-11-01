@@ -86,4 +86,6 @@ public interface MusicService {
     JukeboxStatus startJukebox(Context context, ProgressListener progressListener) throws Exception;
 
     JukeboxStatus getJukeboxStatus(Context context, ProgressListener progressListener) throws Exception;
+
+    JukeboxStatus setJukeboxGain(float gain, Context context, ProgressListener progressListener) throws Exception;
 }
