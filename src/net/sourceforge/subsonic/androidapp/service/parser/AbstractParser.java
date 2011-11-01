@@ -18,16 +18,16 @@
  */
 package net.sourceforge.subsonic.androidapp.service.parser;
 
-import net.sourceforge.subsonic.androidapp.domain.Version;
-import net.sourceforge.subsonic.androidapp.util.Util;
+import java.io.Reader;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import android.content.Context;
 import android.util.Xml;
 import net.sourceforge.subsonic.androidapp.R;
+import net.sourceforge.subsonic.androidapp.domain.Version;
 import net.sourceforge.subsonic.androidapp.util.ProgressListener;
-
-import java.io.Reader;
+import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
  * @author Sindre Mehus
@@ -98,6 +98,11 @@ public abstract class AbstractParser {
     protected Long getLong(String name) {
         String s = get(name);
         return s == null ? null : Long.valueOf(s);
+    }
+
+    protected Float getFloat(String name) {
+        String s = get(name);
+        return s == null ? null : Float.valueOf(s);
     }
 
     protected void init(Reader reader) throws Exception {

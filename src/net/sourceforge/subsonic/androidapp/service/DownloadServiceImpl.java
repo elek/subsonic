@@ -18,6 +18,12 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -38,12 +44,6 @@ import net.sourceforge.subsonic.androidapp.util.LRUCache;
 import net.sourceforge.subsonic.androidapp.util.ShufflePlayBuffer;
 import net.sourceforge.subsonic.androidapp.util.SimpleServiceBinder;
 import net.sourceforge.subsonic.androidapp.util.Util;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 
 import static net.sourceforge.subsonic.androidapp.domain.PlayerState.*;
 
@@ -661,12 +661,9 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         }
     }
 
-    void adjustJukeboxVolume() {
-        // TODO: Revisit this.
-        if (jukeboxEnabled) {
-            AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            Log.d(TAG, "Volume: " + audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) + " of " + audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-        }
+    @Override
+    public void adjustJukeboxVolume(boolean up) {
+        jukeboxService.adjustVolume(up);
     }
 
     private synchronized void bufferAndPlay() {

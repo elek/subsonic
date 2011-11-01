@@ -215,6 +215,11 @@ public class CachedMusicService implements MusicService {
         return musicService.getJukeboxStatus(context, progressListener);
     }
 
+    @Override
+    public JukeboxStatus setJukeboxGain(float gain, Context context, ProgressListener progressListener) throws Exception {
+        return musicService.setJukeboxGain(gain, context, progressListener);
+    }
+
     private void checkSettingsChanged(Context context) {
         String newUrl = Util.getRestUrl(context, null);
         if (!Util.equals(newUrl, restUrl)) {

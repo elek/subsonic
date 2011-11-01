@@ -48,6 +48,7 @@ public class JukeboxStatusParser extends AbstractParser {
                     jukeboxStatus.setPositionSeconds(getInteger("position"));
                     jukeboxStatus.setCurrentIndex(getInteger("currentIndex"));
                     jukeboxStatus.setPlaying(getBoolean("playing"));
+                    jukeboxStatus.setGain(getFloat("gain"));
                 }
             }
         } while (eventType != XmlPullParser.END_DOCUMENT);

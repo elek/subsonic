@@ -51,17 +51,12 @@ public class JukeboxService {
 
     // TODO: Create shutdown method?
     // TODO: Gain control
-    // TODO: Excessive cpu usage?
     // TODO: Landscape mode
     // TODO: Shuffle play
     // TODO: Change gui for toggling?
     // TODO: Progress support.
-    // TODO: Read regular status from server. Create "status" REST action.
-    // TODO: Schedule status task right after other tasks.
     // TODO: Test shuffle.
     // TODO: Disable repeat.
-    // TODO: Priority queue
-    // TODO: Estimate progress.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
@@ -161,6 +156,10 @@ public class JukeboxService {
 
         startStatusUpdate();
         tasks.add(new Start());
+    }
+
+    public void adjustVolume(boolean up) {
+        tasks.add(new AdjustVolume(up));
     }
 
     private MusicService getMusicService() {
@@ -263,5 +262,24 @@ public class JukeboxService {
             return getMusicService().startJukebox(downloadService, null);
         }
     }
+
+    private class AdjustVolume extends JukeboxTask {
+
+        private final boolean up;
+
+        private AdjustVolume(boolean up) {
+            this.up = up;
+        }
+
+        @Override
+           JukeboxStatus execute() throws Exception {
+            float gain = jukeboxStatus == null || jukeboxStatus.getGain() == null ? 0.5f : jukeboxStatus.getGain();
+            float delta = up ? 0.15f : -0.15f;
+            gain += delta;
+            gain = Math.max(gain, 0.0f);
+            gain = Math.min(gain, 1.0f);
+            return getMusicService().setJukeboxGain(gain, downloadService, null);
+        }
+       }
 
 }

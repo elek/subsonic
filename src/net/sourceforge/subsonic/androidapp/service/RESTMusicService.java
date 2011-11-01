@@ -555,6 +555,14 @@ public class RESTMusicService implements MusicService {
         return executeJukeboxCommand(context, progressListener, Arrays.asList("action"), Arrays.<Object>asList("status"));
     }
 
+    @Override
+    public JukeboxStatus setJukeboxGain(float gain, Context context, ProgressListener progressListener) throws Exception {
+        List<String> parameterNames = Arrays.asList("action", "gain");
+        List<Object> parameterValues = Arrays.<Object>asList("setGain", gain);
+        return executeJukeboxCommand(context, progressListener, parameterNames, parameterValues);
+
+    }
+
     private JukeboxStatus executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
         Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
         try {
