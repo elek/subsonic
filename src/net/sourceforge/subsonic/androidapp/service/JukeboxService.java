@@ -27,6 +27,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
+import net.sourceforge.subsonic.androidapp.domain.PlayerState;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -66,7 +67,6 @@ public class JukeboxService {
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
-    // TODO: Pause, then skip is broken.
     // TODO: Widget broken?
     // TODO: Make sure position < duration.
     // TODO: Show position when moving slider
@@ -175,6 +175,7 @@ public class JukeboxService {
             jukeboxStatus.setPositionSeconds(offsetSeconds);
         }
         tasks.add(new Skip(index, offsetSeconds));
+        downloadService.setPlayerState(PlayerState.STARTED);
     }
 
     public void stop() {

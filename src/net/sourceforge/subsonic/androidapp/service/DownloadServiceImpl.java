@@ -605,7 +605,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         return playerState;
     }
 
-    private synchronized void setPlayerState(PlayerState playerState) {
+    synchronized void setPlayerState(PlayerState playerState) {
         Log.i(TAG, this.playerState.name() + " -> " + playerState.name() + " (" + currentPlaying + ")");
 
         if (playerState == PAUSED) {
