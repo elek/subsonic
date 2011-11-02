@@ -66,7 +66,6 @@ public class JukeboxService {
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Stop status updates when disabling jukebox.
-    // TODO: Detect song changes.
     // TODO: Pause, then skip is broken.
     // TODO: Widget broken?
     // TODO: Make sure position < duration.
@@ -125,6 +124,12 @@ public class JukeboxService {
         this.jukeboxStatus = jukeboxStatus;
         if (jukeboxStatus.getGain() != null) {
             gain = jukeboxStatus.getGain();
+        }
+
+        // Track change?
+        Integer index = jukeboxStatus.getCurrentPlayingIndex();
+        if (index != null && index != -1 && index != downloadService.getCurrentPlayingIndex()) {
+            downloadService.setCurrentPlaying(index, true);
         }
     }
 
@@ -218,6 +223,12 @@ public class JukeboxService {
         }
 
         return jukeboxStatus.getPositionSeconds();
+    }
+
+    public void setEnabled(boolean enabled) {
+        if (enabled) {
+            updatePlaylist();
+        }
     }
 
     private static class TaskQueue {

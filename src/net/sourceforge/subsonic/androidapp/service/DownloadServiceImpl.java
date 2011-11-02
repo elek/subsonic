@@ -377,7 +377,15 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         }
     }
 
-    private synchronized void setCurrentPlaying(DownloadFile currentPlaying, boolean showNotification) {
+    synchronized void setCurrentPlaying(int currentPlayingIndex, boolean showNotification) {
+        try {
+            setCurrentPlaying(downloadList.get(currentPlayingIndex), showNotification);
+        } catch (IndexOutOfBoundsException x) {
+            // Ignored
+        }
+    }
+
+    synchronized void setCurrentPlaying(DownloadFile currentPlaying, boolean showNotification) {
         this.currentPlaying = currentPlaying;
 
         if (currentPlaying != null) {
@@ -434,7 +442,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             reset();
             setCurrentPlaying(null, false);
         } else {
-            setCurrentPlaying(downloadList.get(index), start);
+            setCurrentPlaying(index, start);
             checkDownloads();
             if (start) {
                 if (jukeboxEnabled) {
@@ -650,8 +658,8 @@ public class DownloadServiceImpl extends Service implements DownloadService {
     @Override
     public void setJukeboxEnabled(boolean jukeboxEnabled) {
         this.jukeboxEnabled = jukeboxEnabled;
+        jukeboxService.setEnabled(jukeboxEnabled);
         if (jukeboxEnabled) {
-            updateJukeboxPlaylist();
             reset();
             
             // Cancel current download, if necessary.
