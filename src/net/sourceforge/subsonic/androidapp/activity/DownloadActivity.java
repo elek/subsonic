@@ -30,6 +30,7 @@ import android.view.ContextMenu;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -48,6 +49,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
@@ -91,6 +93,7 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
     private TextView durationTextView;
     private TextView statusTextView;
     private HorizontalSlider progressBar;
+    private Toast positionToast;
     private View previousButton;
     private View nextButton;
     private View pauseButton;
@@ -124,6 +127,8 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         swipeDistance = (d.getWidth() + d.getHeight()) * PERCENTAGE_OF_SCREEN_FOR_SWIPE / 100;
         swipeVelocity = (d.getWidth() + d.getHeight()) * PERCENTAGE_OF_SCREEN_FOR_SWIPE / 100;
         gestureScanner = new GestureDetector(this);
+        positionToast = Toast.makeText(DownloadActivity.this, "0:00", Toast.LENGTH_SHORT);
+        positionToast.setGravity(Gravity.CENTER, 0, 0);
 
         playlistFlipper = (ViewFlipper) findViewById(R.id.download_playlist_flipper);
         buttonBarFlipper = (ViewFlipper) findViewById(R.id.download_button_bar_flipper);
@@ -272,9 +277,13 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
 
         progressBar.setOnSliderChangeListener(new HorizontalSlider.OnSliderChangeListener() {
             @Override
-            public void onSliderChanged(View view, int position) {
-                getDownloadService().seekTo(position);
-                onProgressChanged();
+            public void onSliderChanged(View view, int position, boolean inProgress) {
+                positionToast.setText(Util.formatDuration(position/1000));
+                positionToast.show();
+                if (!inProgress) {
+                    getDownloadService().seekTo(position);
+                    onProgressChanged();
+                }
             }
         });
         playlistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

@@ -58,6 +58,8 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
+    // TODO: Disable jukebox when offline.
+    // TODO: Use different update interval when connected to wifi.
     // TODO: Create shutdown method?
     // TODO: Landscape mode
     // TODO: Shuffle play
@@ -69,7 +71,6 @@ public class JukeboxService {
     // TODO: Stop status updates when disabling jukebox.
     // TODO: Widget broken?
     // TODO: Make sure position < duration.
-    // TODO: Show position when moving slider
     // TODO: Set initial playing state and position.
     // TODO: Handle incompatible server
     // TODO: Rename to "Remote volume"?
