@@ -58,6 +58,9 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
+    // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
+    // TODO: Stop status updates when disabling jukebox.
+    // TODO: Widget broken?
     // TODO: Disable jukebox when offline.
     // TODO: Use different update interval when connected to wifi.
     // TODO: Create shutdown method?
@@ -68,12 +71,10 @@ public class JukeboxService {
     // TODO: Disable repeat.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
-    // TODO: Stop status updates when disabling jukebox.
-    // TODO: Widget broken?
     // TODO: Make sure position < duration.
-    // TODO: Set initial playing state and position.
     // TODO: Handle incompatible server
     // TODO: Rename to "Remote volume"?
+    // TODO: Clearly indicate to user that jukebox is active.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -231,6 +232,8 @@ public class JukeboxService {
         if (enabled) {
             updatePlaylist();
         }
+        stop();
+        downloadService.setPlayerState(PlayerState.IDLE);
     }
 
     private static class TaskQueue {
