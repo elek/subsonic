@@ -55,15 +55,12 @@ public class JukeboxService {
     private AtomicLong timeOfLastUpdate = new AtomicLong();
     private JukeboxStatus jukeboxStatus;
     private float gain = 0.5f;
-
     private VolumeToast volumeToast;
 
     // TODO: Create shutdown method?
-    // TODO: Gain control
     // TODO: Landscape mode
     // TODO: Shuffle play
     // TODO: Change gui for toggling?
-    // TODO: Progress support.
     // TODO: Test shuffle.
     // TODO: Disable repeat.
     // TODO: Persist RC state.
@@ -71,10 +68,12 @@ public class JukeboxService {
     // TODO: Stop status updates when disabling jukebox.
     // TODO: Detect song changes.
     // TODO: Pause, then skip is broken.
-    // TODO: Toast when changing gain.
     // TODO: Widget broken?
     // TODO: Make sure position < duration.
     // TODO: Show position when moving slider
+    // TODO: Set initial playing state and position.
+    // TODO: Handle incompatible server
+    // TODO: Rename to "Remote volume"?
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -94,7 +93,8 @@ public class JukeboxService {
                 updateStatus();
             }
         };
-        statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, 0L, STATUS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+        statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, STATUS_UPDATE_INTERVAL_SECONDS,
+                STATUS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
     }
 
     private synchronized void stopStatusUpdate() {
@@ -112,6 +112,8 @@ public class JukeboxService {
             // Only update status if no other commands have been issued in the meantime.
             if (seqNo == sequenceNumber.get()) {
                 onStatusUpdate(status);
+            } else {
+                Log.d(TAG, "Ignoring status update 1.");
             }
         } catch (Throwable x) {
             Log.e(TAG, "Failed to update jukebox status: " + x, x);
@@ -129,12 +131,16 @@ public class JukeboxService {
     private void processTasks() {
         while (true) {
             try {
+                JukeboxTask task = tasks.take();
+
                 long seqNo = sequenceNumber.get();
-                JukeboxStatus status = tasks.take().execute();
+                JukeboxStatus status = task.execute();
 
                 // Only update status if no other commands have been issued in the meantime.
                 if (seqNo == sequenceNumber.get()) {
                     onStatusUpdate(status);
+                } else {
+                    Log.d(TAG, "Ignoring status update 2.");
                 }
             } catch (Throwable x) {
                 Log.e(TAG, "Failed to process jukebox task: " + x, x);
