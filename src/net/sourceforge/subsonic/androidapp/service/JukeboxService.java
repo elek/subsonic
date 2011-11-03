@@ -51,13 +51,14 @@ public class JukeboxService {
     private final TaskQueue tasks = new TaskQueue();
     private final DownloadServiceImpl downloadService;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    private final AtomicLong sequenceNumber = new AtomicLong();
     private ScheduledFuture<?> statusUpdateFuture;
     private AtomicLong timeOfLastUpdate = new AtomicLong();
     private JukeboxStatus jukeboxStatus;
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
+    // TODO: Put update tasks on queue.
+    // TODO: Create callback interface for reporting problems: 1. Connection error, 2. Auth error, 3. Server version error.
     // TODO: Handle incompatible server
     // TODO: Handle unauthorized use.
     // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
@@ -72,7 +73,6 @@ public class JukeboxService {
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Make sure position < duration.
-    // TODO: Clearly indicate to user that jukebox is active.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;
@@ -89,7 +89,8 @@ public class JukeboxService {
         Runnable updateTask = new Runnable() {
             @Override
             public void run() {
-                updateStatus();
+                tasks.remove(GetStatus.class);
+                tasks.add(new GetStatus());
             }
         };
         statusUpdateFuture = executorService.scheduleWithFixedDelay(updateTask, STATUS_UPDATE_INTERVAL_SECONDS,
@@ -103,28 +104,9 @@ public class JukeboxService {
         }
     }
 
-    private void updateStatus() {
-        try {
-            long seqNo = sequenceNumber.get();
-            JukeboxStatus status = getMusicService().getJukeboxStatus(downloadService, null);
-
-            // Only update status if no other commands have been issued in the meantime.
-            if (seqNo == sequenceNumber.get()) {
-                onStatusUpdate(status);
-            } else {
-                Log.d(TAG, "Ignoring status update 1.");
-            }
-        } catch (Throwable x) {
-            Log.e(TAG, "Failed to update jukebox status: " + x, x);
-        }
-    }
-
     private void onStatusUpdate(JukeboxStatus jukeboxStatus) {
         timeOfLastUpdate.set(System.currentTimeMillis());
         this.jukeboxStatus = jukeboxStatus;
-        if (jukeboxStatus.getGain() != null) {
-            gain = jukeboxStatus.getGain();
-        }
 
         // Track change?
         Integer index = jukeboxStatus.getCurrentPlayingIndex();
@@ -136,17 +118,8 @@ public class JukeboxService {
     private void processTasks() {
         while (true) {
             try {
-                JukeboxTask task = tasks.take();
-
-                long seqNo = sequenceNumber.get();
-                JukeboxStatus status = task.execute();
-
-                // Only update status if no other commands have been issued in the meantime.
-                if (seqNo == sequenceNumber.get()) {
-                    onStatusUpdate(status);
-                } else {
-                    Log.d(TAG, "Ignoring status update 2.");
-                }
+                JukeboxStatus status = tasks.take().execute();
+                onStatusUpdate(status);
             } catch (Throwable x) {
                 Log.e(TAG, "Failed to process jukebox task: " + x, x);
             }
@@ -263,15 +236,18 @@ public class JukeboxService {
 
     private abstract class JukeboxTask {
 
-        JukeboxTask() {
-            sequenceNumber.incrementAndGet();
-        }
-
         abstract JukeboxStatus execute() throws Exception;
 
         @Override
         public String toString() {
             return getClass().getSimpleName();
+        }
+    }
+
+    private class GetStatus extends JukeboxTask {
+        @Override
+        JukeboxStatus execute() throws Exception {
+            return getMusicService().getJukeboxStatus(downloadService, null);
         }
     }
 
