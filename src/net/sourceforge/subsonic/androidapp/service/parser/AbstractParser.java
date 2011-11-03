@@ -59,6 +59,9 @@ public abstract class AbstractParser {
             case 40:
                 message = context.getResources().getString(R.string.parser_not_authenticated);
                 break;
+            case 50:
+                message = context.getResources().getString(R.string.parser_not_authorized);
+                break;
             default:
                 message = get("message");
                 break;

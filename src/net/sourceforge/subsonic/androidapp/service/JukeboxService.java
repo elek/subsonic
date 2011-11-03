@@ -39,6 +39,7 @@ import android.widget.Toast;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
+import net.sourceforge.subsonic.androidapp.service.parser.SubsonicRESTException;
 import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
@@ -60,10 +61,7 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
-    // TODO: Create callback interface for reporting problems: 1. Connection error, 2. Auth error, 3. Server version error.
-    // TODO: Handle unauthorized use.
     // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
-    // TODO: Stop status updates when disabling jukebox.
     // TODO: Widget broken?
     // TODO: Disable jukebox when offline.
     // TODO: Use different update interval when connected to wifi.
@@ -129,9 +127,9 @@ public class JukeboxService {
         }
     }
 
-    private void onError(JukeboxTask task, Throwable throwable) {
-        Log.w(TAG, "Failed to process jukebox task: " + throwable, throwable);
-        if (throwable instanceof ServerTooOldException && !(task instanceof Stop)) {
+    private void onError(JukeboxTask task, Throwable x) {
+        if (x instanceof ServerTooOldException && !(task instanceof Stop)) {
+            Log.w(TAG, x.toString());
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -139,6 +137,17 @@ public class JukeboxService {
                 }
             });
             downloadService.setJukeboxEnabled(false);
+        } else if (x instanceof SubsonicRESTException && ((SubsonicRESTException) x).getCode() == 50 && !(task instanceof Stop)) {
+            Log.w(TAG, x.toString());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Util.toast(downloadService, R.string.download_jukebox_not_authorized, false);
+                }
+            });
+            downloadService.setJukeboxEnabled(false);
+        } else {
+            Log.e(TAG, "Failed to process jukebox task: " + x, x);
         }
     }
 
@@ -203,7 +212,7 @@ public class JukeboxService {
     }
 
     public int getPositionSeconds() {
-        if (jukeboxStatus == null || timeOfLastUpdate.get() == 0) {
+        if (jukeboxStatus == null || jukeboxStatus.getPositionSeconds() == null || timeOfLastUpdate.get() == 0) {
             return 0;
         }
 
