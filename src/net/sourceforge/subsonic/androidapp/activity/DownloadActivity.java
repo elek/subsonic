@@ -79,6 +79,8 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
 
     private static final int DIALOG_SAVE_PLAYLIST = 100;
     private static final int PERCENTAGE_OF_SCREEN_FOR_SWIPE = 5;
+    private static final int COLOR_BUTTON_ENABLED = Color.rgb(129, 201, 54);
+    private static final int COLOR_BUTTON_DISABLED = Color.rgb(164, 166, 158);
 
     private ViewFlipper playlistFlipper;
     private ViewFlipper buttonBarFlipper;
@@ -163,6 +165,9 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         pauseButton.setOnTouchListener(touchListener);
         stopButton.setOnTouchListener(touchListener);
         startButton.setOnTouchListener(touchListener);
+        equalizerButton.setOnTouchListener(touchListener);
+        visualizerButton.setOnTouchListener(touchListener);
+        jukeboxButton.setOnTouchListener(touchListener);
         buttonBarFlipper.setOnTouchListener(touchListener);
         emptyTextView.setOnTouchListener(touchListener);
         albumArtImageView.setOnTouchListener(touchListener);
@@ -393,14 +398,14 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
     private void updateButtons() {
         boolean eqEnabled = getDownloadService() != null && getDownloadService().getEqualizerController() != null &&
                 getDownloadService().getEqualizerController().isEnabled();
-        equalizerButton.setTextColor(eqEnabled ? Color.rgb(129, 201, 54) : Color.rgb(164, 166, 158));
+        equalizerButton.setTextColor(eqEnabled ? COLOR_BUTTON_ENABLED : COLOR_BUTTON_DISABLED);
 
         if (visualizerView != null) {
-            visualizerButton.setTextColor(visualizerView.isActive() ? Color.rgb(129, 201, 54) : Color.rgb(164, 166, 158));
+            visualizerButton.setTextColor(visualizerView.isActive() ? COLOR_BUTTON_ENABLED : COLOR_BUTTON_DISABLED);
         }
 
         boolean jukeboxEnabled = getDownloadService() != null && getDownloadService().isJukeboxEnabled();
-        jukeboxButton.setTextColor(jukeboxEnabled ? Color.rgb(129, 201, 54) : Color.rgb(164, 166, 158));
+        jukeboxButton.setTextColor(jukeboxEnabled ? COLOR_BUTTON_ENABLED : COLOR_BUTTON_DISABLED);
     }
 
     // Scroll to current playing/downloading.
@@ -769,6 +774,8 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
                 startButton.setVisibility(View.VISIBLE);
                 break;
         }
+
+        jukeboxButton.setTextColor(getDownloadService().isJukeboxEnabled() ? COLOR_BUTTON_ENABLED : COLOR_BUTTON_DISABLED);
     }
 
     private class SongListAdapter extends ArrayAdapter<DownloadFile> {

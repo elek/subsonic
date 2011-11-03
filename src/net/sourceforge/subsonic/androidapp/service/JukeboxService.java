@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -38,6 +39,7 @@ import android.widget.Toast;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
+import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
  * @author Sindre Mehus
@@ -48,6 +50,7 @@ public class JukeboxService {
     private static final String TAG = JukeboxService.class.getSimpleName();
     private static final long STATUS_UPDATE_INTERVAL_SECONDS = 4L; // TODO
 
+    private final Handler handler = new Handler();
     private final TaskQueue tasks = new TaskQueue();
     private final DownloadServiceImpl downloadService;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
@@ -57,9 +60,7 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
-    // TODO: Put update tasks on queue.
     // TODO: Create callback interface for reporting problems: 1. Connection error, 2. Auth error, 3. Server version error.
-    // TODO: Handle incompatible server
     // TODO: Handle unauthorized use.
     // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
     // TODO: Stop status updates when disabling jukebox.
@@ -104,6 +105,19 @@ public class JukeboxService {
         }
     }
 
+    private void processTasks() {
+        while (true) {
+            JukeboxTask task = null;
+            try {
+                task = tasks.take();
+                JukeboxStatus status = task.execute();
+                onStatusUpdate(status);
+            } catch (Throwable x) {
+                onError(task, x);
+            }
+        }
+    }
+
     private void onStatusUpdate(JukeboxStatus jukeboxStatus) {
         timeOfLastUpdate.set(System.currentTimeMillis());
         this.jukeboxStatus = jukeboxStatus;
@@ -115,14 +129,16 @@ public class JukeboxService {
         }
     }
 
-    private void processTasks() {
-        while (true) {
-            try {
-                JukeboxStatus status = tasks.take().execute();
-                onStatusUpdate(status);
-            } catch (Throwable x) {
-                Log.e(TAG, "Failed to process jukebox task: " + x, x);
-            }
+    private void onError(JukeboxTask task, Throwable throwable) {
+        Log.w(TAG, "Failed to process jukebox task: " + throwable, throwable);
+        if (throwable instanceof ServerTooOldException && !(task instanceof Stop)) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Util.toast(downloadService, R.string.download_jukebox_server_too_old, false);
+                }
+            });
+            downloadService.setJukeboxEnabled(false);
         }
     }
 
@@ -200,6 +216,7 @@ public class JukeboxService {
     }
 
     public void setEnabled(boolean enabled) {
+        tasks.clear();
         if (enabled) {
             updatePlaylist();
         }
@@ -231,6 +248,10 @@ public class JukeboxService {
             } catch (Throwable x) {
                 Log.w(TAG, "Failed to clean-up task queue.", x);
             }
+        }
+
+        void clear() {
+            queue.clear();
         }
     }
 

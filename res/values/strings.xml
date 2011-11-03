@@ -106,6 +106,7 @@
     <string name="download.jukebox_on">Turned on remote control. Music is played on server.</string>
     <string name="download.jukebox_off">Turned off remote control. Music is played on phone.</string>
     <string name="download.jukebox_volume">Remote volume</string>
+    <string name="download.jukebox_server_too_old">Remote control is not supported. Please upgrade your Subsonic server.</string>
 
     <string name="song_details.all">%1$s %2$s</string>
     <string name="song_details.kbps">%d kbps</string>
