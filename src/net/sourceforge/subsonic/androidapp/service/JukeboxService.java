@@ -18,6 +18,16 @@
  */
 package net.sourceforge.subsonic.androidapp.service;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
 import android.content.Context;
 import android.util.Log;
 import android.view.Gravity;
@@ -28,16 +38,6 @@ import android.widget.Toast;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.JukeboxStatus;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Sindre Mehus
@@ -73,7 +73,6 @@ public class JukeboxService {
     // TODO: Minimize status updates.
     // TODO: Make sure position < duration.
     // TODO: Handle incompatible server
-    // TODO: Rename to "Remote volume"?
     // TODO: Clearly indicate to user that jukebox is active.
 
     public JukeboxService(DownloadServiceImpl downloadService) {

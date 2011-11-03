@@ -18,6 +18,15 @@
  */
 package net.sourceforge.subsonic.androidapp.activity;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -30,7 +39,6 @@ import android.view.ContextMenu;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -49,11 +57,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.ViewFlipper;
 import net.sourceforge.subsonic.androidapp.R;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
+import net.sourceforge.subsonic.androidapp.domain.RepeatMode;
 import net.sourceforge.subsonic.androidapp.service.DownloadFile;
 import net.sourceforge.subsonic.androidapp.service.DownloadService;
 import net.sourceforge.subsonic.androidapp.service.MusicService;
@@ -64,15 +72,6 @@ import net.sourceforge.subsonic.androidapp.util.SilentBackgroundTask;
 import net.sourceforge.subsonic.androidapp.util.SongView;
 import net.sourceforge.subsonic.androidapp.util.Util;
 import net.sourceforge.subsonic.androidapp.view.VisualizerView;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static net.sourceforge.subsonic.androidapp.domain.PlayerState.*;
 
@@ -93,7 +92,6 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
     private TextView durationTextView;
     private TextView statusTextView;
     private HorizontalSlider progressBar;
-    private Toast positionToast;
     private View previousButton;
     private View nextButton;
     private View pauseButton;
@@ -127,8 +125,6 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         swipeDistance = (d.getWidth() + d.getHeight()) * PERCENTAGE_OF_SCREEN_FOR_SWIPE / 100;
         swipeVelocity = (d.getWidth() + d.getHeight()) * PERCENTAGE_OF_SCREEN_FOR_SWIPE / 100;
         gestureScanner = new GestureDetector(this);
-        positionToast = Toast.makeText(DownloadActivity.this, "0:00", Toast.LENGTH_SHORT);
-        positionToast.setGravity(Gravity.CENTER, 0, 0);
 
         playlistFlipper = (ViewFlipper) findViewById(R.id.download_playlist_flipper);
         buttonBarFlipper = (ViewFlipper) findViewById(R.id.download_button_bar_flipper);
@@ -239,8 +235,22 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         repeatButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getDownloadService().setRepeatMode(getDownloadService().getRepeatMode().next());
+                RepeatMode repeatMode = getDownloadService().getRepeatMode().next();
+                getDownloadService().setRepeatMode(repeatMode);
                 onDownloadListChanged();
+                switch (repeatMode) {
+                    case OFF:
+                        Util.toast(DownloadActivity.this, R.string.download_repeat_off);
+                        break;
+                    case ALL:
+                        Util.toast(DownloadActivity.this, R.string.download_repeat_all);
+                        break;
+                    case SINGLE:
+                        Util.toast(DownloadActivity.this, R.string.download_repeat_single);
+                        break;
+                    default:
+                        break;
+                }
             }
         });
 
@@ -254,17 +264,21 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         visualizerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                visualizerView.setActive(!visualizerView.isActive());
+                boolean active = !visualizerView.isActive();
+                visualizerView.setActive(active);
                 getDownloadService().setShowVisualization(visualizerView.isActive());
                 updateButtons();
+                Util.toast(DownloadActivity.this, active ? R.string.download_visualizer_on : R.string.download_visualizer_off);
             }
         });
 
         jukeboxButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getDownloadService().setJukeboxEnabled(!getDownloadService().isJukeboxEnabled());
+                boolean jukeboxEnabled = !getDownloadService().isJukeboxEnabled();
+                getDownloadService().setJukeboxEnabled(jukeboxEnabled);
                 updateButtons();
+                Util.toast(DownloadActivity.this, jukeboxEnabled ? R.string.download_jukebox_on : R.string.download_jukebox_off, false);
             }
         });
 
@@ -278,8 +292,7 @@ public class DownloadActivity extends SubsonicTabActivity implements OnGestureLi
         progressBar.setOnSliderChangeListener(new HorizontalSlider.OnSliderChangeListener() {
             @Override
             public void onSliderChanged(View view, int position, boolean inProgress) {
-                positionToast.setText(Util.formatDuration(position/1000));
-                positionToast.show();
+                Util.toast(DownloadActivity.this, Util.formatDuration(position / 1000), true);
                 if (!inProgress) {
                     getDownloadService().seekTo(position);
                     onProgressChanged();

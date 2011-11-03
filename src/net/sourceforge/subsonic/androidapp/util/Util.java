@@ -35,8 +35,6 @@ import java.text.NumberFormat;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import android.app.Service;
-import net.sourceforge.subsonic.androidapp.domain.Version;
 import org.apache.http.HttpEntity;
 
 import android.app.Activity;
@@ -44,6 +42,7 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -68,6 +67,7 @@ import net.sourceforge.subsonic.androidapp.activity.ErrorActivity;
 import net.sourceforge.subsonic.androidapp.domain.MusicDirectory;
 import net.sourceforge.subsonic.androidapp.domain.PlayerState;
 import net.sourceforge.subsonic.androidapp.domain.RepeatMode;
+import net.sourceforge.subsonic.androidapp.domain.Version;
 import net.sourceforge.subsonic.androidapp.provider.SubsonicAppWidgetProvider;
 import net.sourceforge.subsonic.androidapp.receiver.MediaButtonIntentReceiver;
 import net.sourceforge.subsonic.androidapp.service.DownloadServiceImpl;
@@ -96,6 +96,7 @@ public final class Util {
 
     // Used by hexEncode()
     private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+    private static Toast toast;
 
     private Util() {
     }
@@ -329,19 +330,26 @@ public final class Util {
         return true;
     }
 
-    public static void toast(Context context, String message) {
-        Toast toast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
-        toast.setGravity(Gravity.CENTER, 0, 0);
-        toast.show();
-    }
-
     public static void toast(Context context, int messageId) {
         toast(context, messageId, true);
     }
 
     public static void toast(Context context, int messageId, boolean shortDuration) {
-        Toast toast = Toast.makeText(context, messageId, shortDuration ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast(context, context.getString(messageId), shortDuration);
+    }
+
+    public static void toast(Context context, String message) {
+        toast(context, message, true);
+    }
+
+    public static void toast(Context context, String message, boolean shortDuration) {
+        if (toast == null) {
+            toast = Toast.makeText(context, message, shortDuration ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+        } else {
+            toast.setText(message);
+            toast.setDuration(shortDuration ? Toast.LENGTH_SHORT : Toast.LENGTH_LONG);
+        }
         toast.show();
     }
 
