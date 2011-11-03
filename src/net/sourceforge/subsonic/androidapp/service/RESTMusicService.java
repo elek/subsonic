@@ -251,29 +251,12 @@ public class RESTMusicService implements MusicService {
 
     @Override
     public SearchResult search(SearchCritera critera, Context context, ProgressListener progressListener) throws Exception {
-        // Ensure backward compatibility with REST 1.3.
-        if (isServerAtLeast14(context)) {
+        try {
             return searchNew(critera, context, progressListener);
-        } else {
+        } catch (ServerTooOldException x) {
+            // Ensure backward compatibility with REST 1.3.
             return searchOld(critera, context, progressListener);
         }
-    }
-
-    private boolean isServerAtLeast14(Context context) {
-        return isServerAtLeast(context, "1.4");
-    }
-
-    private boolean isServerAtLeast15(Context context) {
-        return isServerAtLeast(context, "1.5");
-    }
-
-    private boolean isServerAtLeast17(Context context) {
-        return isServerAtLeast(context, "1.7");
-    }
-
-    private boolean isServerAtLeast(Context context, String version) {
-        Version serverVersion = Util.getServerRestVersion(context);
-        return serverVersion == null || serverVersion.compareTo(new Version(version)) >= 0;
     }
 
     /**
@@ -294,6 +277,8 @@ public class RESTMusicService implements MusicService {
      * Search using the "search2" REST method, available in 1.4.0 and later.
      */
     private SearchResult searchNew(SearchCritera critera, Context context, ProgressListener progressListener) throws Exception {
+        checkServerVersion(context, "1.4", null);
+
         List<String> parameterNames = Arrays.asList("query", "artistCount", "albumCount", "songCount");
         List<Object> parameterValues = Arrays.<Object>asList(critera.getQuery(), critera.getArtistCount(),
                                                              critera.getAlbumCount(), critera.getSongCount());
@@ -366,11 +351,7 @@ public class RESTMusicService implements MusicService {
 
     @Override
     public void scrobble(String id, boolean submission, Context context, ProgressListener progressListener) throws Exception {
-
-        if (!isServerAtLeast15(context)) {
-            throw new Exception("Scrobbling not supported, server version is too old.");
-        }
-
+        checkServerVersion(context, "1.5", "Scrobbling not supported.");
         Reader reader = getReader(context, progressListener, "scrobble", null, Arrays.asList("id", "submission"), Arrays.<Object>asList(id, submission));
         try {
             new ErrorParser(context).parse(reader);
@@ -416,6 +397,16 @@ public class RESTMusicService implements MusicService {
             return new VersionParser().parse(reader);
         } finally {
             Util.close(reader);
+        }
+    }
+
+    private void checkServerVersion(Context context, String version, String text) throws ServerTooOldException {
+        Version serverVersion = Util.getServerRestVersion(context);
+        Version requiredVersion = new Version(version);
+        boolean ok = serverVersion == null || serverVersion.compareTo(requiredVersion) >= 0;
+
+        if (!ok) {
+            throw new ServerTooOldException(text, serverVersion, requiredVersion);
         }
     }
 
@@ -516,14 +507,10 @@ public class RESTMusicService implements MusicService {
 
     @Override
     public JukeboxStatus updateJukeboxPlaylist(List<String> ids, Context context, ProgressListener progressListener) throws Exception {
-
-        if (!isServerAtLeast17(context)) {
-            throw new Exception("Jukebox not supported, server version is too old.");
-        }
-
-        List<String> parameterNames = new ArrayList<String>(ids.size() + 1);
+        int n = ids.size();
+        List<String> parameterNames = new ArrayList<String>(n + 1);
         parameterNames.add("action");
-        for (int i = 0; i < ids.size(); i++) {
+        for (int i = 0; i < n; i++) {
             parameterNames.add("id");
         }
         List<Object> parameterValues = new ArrayList<Object>();
@@ -564,6 +551,7 @@ public class RESTMusicService implements MusicService {
     }
 
     private JukeboxStatus executeJukeboxCommand(Context context, ProgressListener progressListener, List<String> parameterNames, List<Object> parameterValues) throws Exception {
+        checkServerVersion(context, "1.7", "Jukebox not supported.");
         Reader reader = getReader(context, progressListener, "jukeboxControl", null, parameterNames, parameterValues);
         try {
             return new JukeboxStatusParser(context).parse(reader);

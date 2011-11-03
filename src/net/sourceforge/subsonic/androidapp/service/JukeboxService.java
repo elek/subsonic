@@ -58,21 +58,20 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
+    // TODO: Handle incompatible server
+    // TODO: Handle unauthorized use.
     // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
     // TODO: Stop status updates when disabling jukebox.
     // TODO: Widget broken?
     // TODO: Disable jukebox when offline.
     // TODO: Use different update interval when connected to wifi.
     // TODO: Create shutdown method?
-    // TODO: Landscape mode
     // TODO: Shuffle play
-    // TODO: Change gui for toggling?
     // TODO: Test shuffle.
     // TODO: Disable repeat.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
     // TODO: Make sure position < duration.
-    // TODO: Handle incompatible server
     // TODO: Clearly indicate to user that jukebox is active.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
