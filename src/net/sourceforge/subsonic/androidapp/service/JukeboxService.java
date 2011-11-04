@@ -49,7 +49,7 @@ import net.sourceforge.subsonic.androidapp.util.Util;
 public class JukeboxService {
 
     private static final String TAG = JukeboxService.class.getSimpleName();
-    private static final long STATUS_UPDATE_INTERVAL_SECONDS = 4L; // TODO
+    private static final long STATUS_UPDATE_INTERVAL_SECONDS = 5L;
 
     private final Handler handler = new Handler();
     private final TaskQueue tasks = new TaskQueue();
@@ -63,7 +63,6 @@ public class JukeboxService {
 
     // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
     // TODO: Widget broken?
-    // TODO: Disable jukebox when offline.
     // TODO: Use different update interval when connected to wifi.
     // TODO: Create shutdown method?
     // TODO: Shuffle play
@@ -129,26 +128,25 @@ public class JukeboxService {
 
     private void onError(JukeboxTask task, Throwable x) {
         if (x instanceof ServerTooOldException && !(task instanceof Stop)) {
-            Log.w(TAG, x.toString());
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Util.toast(downloadService, R.string.download_jukebox_server_too_old, false);
-                }
-            });
-            downloadService.setJukeboxEnabled(false);
+            disableJukeboxOnError(x, R.string.download_jukebox_server_too_old);
+        } else if (x instanceof OfflineException && !(task instanceof Stop)) {
+            disableJukeboxOnError(x, R.string.download_jukebox_offline);
         } else if (x instanceof SubsonicRESTException && ((SubsonicRESTException) x).getCode() == 50 && !(task instanceof Stop)) {
-            Log.w(TAG, x.toString());
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Util.toast(downloadService, R.string.download_jukebox_not_authorized, false);
-                }
-            });
-            downloadService.setJukeboxEnabled(false);
+            disableJukeboxOnError(x, R.string.download_jukebox_not_authorized);
         } else {
             Log.e(TAG, "Failed to process jukebox task: " + x, x);
         }
+    }
+
+    private void disableJukeboxOnError(Throwable x, final int resourceId) {
+        Log.w(TAG, x.toString());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Util.toast(downloadService, resourceId, false);
+            }
+        });
+        downloadService.setJukeboxEnabled(false);
     }
 
     public void updatePlaylist() {
