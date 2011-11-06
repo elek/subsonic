@@ -43,6 +43,8 @@ import net.sourceforge.subsonic.androidapp.service.parser.SubsonicRESTException;
 import net.sourceforge.subsonic.androidapp.util.Util;
 
 /**
+ * Provides an asynchronous interface to the remote jukebox on the Subsonic server.
+ *
  * @author Sindre Mehus
  * @version $Id$
  */
@@ -56,21 +58,18 @@ public class JukeboxService {
     private final DownloadServiceImpl downloadService;
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> statusUpdateFuture;
-    private AtomicLong timeOfLastUpdate = new AtomicLong();
+    private final AtomicLong timeOfLastUpdate = new AtomicLong();
     private JukeboxStatus jukeboxStatus;
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
-    // TODO: Set initial playing state, position and possibly playlist. Possible issue stop command instead.
+    // TODO: Test shuffle play
     // TODO: Widget broken?
-    // TODO: Use different update interval when connected to wifi.
+    // TODO: Merge into main trunk.
     // TODO: Create shutdown method?
-    // TODO: Shuffle play
-    // TODO: Test shuffle.
     // TODO: Disable repeat.
     // TODO: Persist RC state.
     // TODO: Minimize status updates.
-    // TODO: Make sure position < duration.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
         this.downloadService = downloadService;

@@ -765,12 +765,16 @@ public class DownloadServiceImpl extends Service implements DownloadService {
 
     protected synchronized void checkDownloads() {
 
-        if (jukeboxEnabled || !Util.isNetworkConnected(this) || !Util.isExternalStoragePresent() || !lifecycleSupport.isExternalStorageAvailable()) {
+        if (!Util.isExternalStoragePresent() || !lifecycleSupport.isExternalStorageAvailable()) {
             return;
         }
 
         if (shufflePlay) {
             checkShufflePlay();
+        }
+
+        if (jukeboxEnabled || !Util.isNetworkConnected(this)) {
+            return;
         }
 
         if (downloadList.isEmpty()) {
