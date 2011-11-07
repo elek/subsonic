@@ -63,7 +63,7 @@ public class JukeboxService {
     private float gain = 0.5f;
     private VolumeToast volumeToast;
 
-    // TODO: Test shuffle play
+    // TODO: Report warning if queue fills up.
     // TODO: Widget broken?
     // TODO: Merge into main trunk.
     // TODO: Create shutdown method?

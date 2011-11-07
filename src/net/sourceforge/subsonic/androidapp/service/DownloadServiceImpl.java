@@ -446,7 +446,7 @@ public class DownloadServiceImpl extends Service implements DownloadService {
             checkDownloads();
             if (start) {
                 if (jukeboxEnabled) {
-                    jukeboxService.skip(index, 0);
+                    jukeboxService.skip(getCurrentPlayingIndex(), 0);
                     setPlayerState(STARTED);
                 } else {
                     bufferAndPlay();
