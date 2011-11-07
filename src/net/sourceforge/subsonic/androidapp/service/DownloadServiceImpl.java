@@ -834,6 +834,8 @@ public class DownloadServiceImpl extends Service implements DownloadService {
         final int listSize = 20;
         boolean wasEmpty = downloadList.isEmpty();
 
+        long revisionBefore = revision;
+
         // First, ensure that list is at least 20 songs long.
         int size = size();
         if (size < listSize) {
@@ -855,6 +857,10 @@ public class DownloadServiceImpl extends Service implements DownloadService {
                 downloadList.remove(0);
                 revision++;
             }
+        }
+
+        if (revisionBefore != revision) {
+            updateJukeboxPlaylist();
         }
 
         if (wasEmpty && !downloadList.isEmpty()) {
