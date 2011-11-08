@@ -64,11 +64,10 @@ public class JukeboxService {
     private VolumeToast volumeToast;
 
     // TODO: Report warning if queue fills up.
-    // TODO: Widget broken?
     // TODO: Merge into main trunk.
     // TODO: Create shutdown method?
     // TODO: Disable repeat.
-    // TODO: Persist RC state.
+    // TODO: Persist RC state?
     // TODO: Minimize status updates.
 
     public JukeboxService(DownloadServiceImpl downloadService) {
